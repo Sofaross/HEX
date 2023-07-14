@@ -1,10 +1,10 @@
 package ui.Cursor;
 
-public class Cursor {
+public class HexCursor {
     private Position position; // Текущая позиция курсора
     private int length; // Общая длина данных, на которые указывает курсор
 
-    public Cursor() {
+    public HexCursor() {
         this.length = 1;
         position=new Position();
     }
