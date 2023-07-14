@@ -23,15 +23,22 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
         tableView.setListener(this);
         JScrollPane scrollPane = tableView.getScrollPane();
 
-// Создаем панель для таблиц
+        // Создаем таблицу для отображения данных в виде ASCII
+        asciiTable = new HexEditorTableView();
+        JScrollPane asciiScrollPane = asciiTable.getScrollPane();
+
+        // Создаем панель для таблиц
         JPanel tablePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 1.0;
+        gbc.weightx = 3.0;
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
         tablePanel.add(scrollPane, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        tablePanel.add(asciiScrollPane, gbc);
         add(tablePanel, BorderLayout.CENTER);
 
         // Создаем панель для отображения информации
