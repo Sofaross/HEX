@@ -1,43 +1,69 @@
 package model;
 
+import controller.ErrorHandler;
+
 import javax.swing.*;
 import java.io.File;
 
 public class FileHandler {
-    public static void saveFile( HexEditor hexEditor) {
-        if (hexEditor != null) {
+    public static void saveFile(HexEditor hexEditor) {
+        if (hexEditor == null) {
+            ErrorHandler.showError("File not create!");
+            return;
+        }
+        try {
             if (hexEditor.getFileName() != null) {
                 hexEditor.write(hexEditor.getFileName());
-            } else if (hexEditor.getData() != null) saveFile(hexEditor);
-        } else {
-            JOptionPane.showMessageDialog(null, "File not loaded. Please open a file first", "Error", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-    public static void saveFileAs(HexEditor hexEditor) {
-        if (hexEditor != null) {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Save File");
-            int userSelection = fileChooser.showSaveDialog(null);
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                File fileToSave = fileChooser.getSelectedFile();
-                hexEditor.write(fileToSave);
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "File is empty", "Error", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-    public static HexEditor openFile(HexEditor hexEditor) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Open file");
-        int userSelection = fileChooser.showOpenDialog(null);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            File fileToOpen = fileChooser.getSelectedFile();
-            if (fileToOpen.length() == 0) {
-                 JOptionPane.showMessageDialog(null, "Selected file is empty", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                hexEditor = new HexEditor(fileToOpen.getAbsolutePath());
+                ErrorHandler.showError("No file name specified");
             }
+        } catch (Exception e) {
+            ErrorHandler.showError("Error saving file: " + e.getMessage());
         }
-        return hexEditor;
+    }
+
+    public static void saveFileAs(HexEditor hexEditor) {
+        try {
+            if (hexEditor != null) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Save File");
+                int userSelection = fileChooser.showSaveDialog(null);
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = fileChooser.getSelectedFile();
+                    hexEditor.write(fileToSave);
+                }
+            } else {
+                throw new NullPointerException("File not create!");
+            }
+        } catch (Exception e) {
+            ErrorHandler.showError("Error saving file: " + e.getMessage());
+        }
+    }
+
+    public static HexEditor openFile(HexEditor hexEditor) {
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Open file");
+            int userSelection = fileChooser.showOpenDialog(null);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToOpen = fileChooser.getSelectedFile();
+                if (fileToOpen.length() == 0) {
+                    ErrorHandler.showError("Selected file is empty");
+                } else {
+                    hexEditor = new HexEditor(fileToOpen.getAbsolutePath());
+                }
+            } else if (userSelection == JFileChooser.CANCEL_OPTION) {
+                ErrorHandler.showError("No file selected");
+            }
+
+            if (hexEditor == null) {
+                throw new NullPointerException("hexEditor is null");
+            }
+
+            return hexEditor;
+        } catch (Exception e) {
+            ErrorHandler.showError("Error opening file: " + e.getMessage());
+            return null;
+        }
     }
 }
