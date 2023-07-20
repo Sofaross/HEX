@@ -1,4 +1,4 @@
-package ui.Cursor;
+package model.Cursor;
 
 public class Position {
     int row;
