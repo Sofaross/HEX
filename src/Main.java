@@ -1,9 +1,8 @@
-import ui.HexEditorUI;
+import ui.MainView;
 
 public class Main {
     public static void main(String[] args) {
-        HexEditorUI frame = new HexEditorUI();
+        MainView frame = new MainView();
         frame.setVisible(true);
-
     }
 }
