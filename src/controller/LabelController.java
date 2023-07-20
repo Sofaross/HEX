@@ -1,10 +1,10 @@
-package ui.Jlabel;
+package controller;
 
 import model.HexEditor;
 
 import javax.swing.*;
 
-public class LabelUpdater {
+public class LabelController {
     public static String byteCount(HexEditor hexEditor) {
         try {
             int byteCount = hexEditor.getByteCount();
@@ -14,26 +14,28 @@ public class LabelUpdater {
         }
         return "";
     }
-
-    //    Конвертация hex байта в десятичное значение без знака
     public static String hexToUnsignedDecimal(String hexByte) {
-        int decimalValue = Integer.parseInt(hexByte, 16);
-        return ("Signed: " + decimalValue);
-    }
-    //  Конвертация hex байта в десятичное значение со знаком
-    public static String hexToSignedDecimal(String hexByte) {
-        int decimalValue = Integer.parseInt(hexByte, 16);
-        if (decimalValue > 127) {
-            decimalValue -= 256;
+        if (hexByte != null && !hexByte.isEmpty()) {
+            int decimalValue = Integer.parseInt(hexByte, 16);
+            return ("Signed: " + decimalValue);
         }
-        return ("Unsigned: " + decimalValue);
+        return "";
+    }
+    public static String hexToSignedDecimal(String hexByte) {
+        if (hexByte != null && !hexByte.isEmpty()) {
+            int decimalValue = Integer.parseInt(hexByte, 16);
+            if (decimalValue > 127) {
+                decimalValue -= 256;
+            }
+            return ("Unsigned: " + decimalValue);
+        }
+        return "";
     }
     public static String fileName(HexEditor hexEditor){
         if (hexEditor.getFileName() != null ) {
             return ("File: " + hexEditor.getFileName().getName());
         } else return "";
     }
-
     public static String hexToAscii(String cellValue) {
         if (cellValue != null && !cellValue.isEmpty()) {
             try {
