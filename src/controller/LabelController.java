@@ -2,7 +2,6 @@ package controller;
 
 import model.HexEditor;
 
-import javax.swing.*;
 
 public class LabelController {
     public static String byteCount(HexEditor hexEditor) {
@@ -10,8 +9,7 @@ public class LabelController {
             int byteCount = hexEditor.getByteCount();
             return ("Byte count: " + byteCount);
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error updating byte count label: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+            ErrorHandler.showError("Error updating byte count label");}
         return "";
     }
     public static String hexToUnsignedDecimal(String hexByte) {
