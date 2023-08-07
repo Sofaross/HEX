@@ -1,28 +1,30 @@
 package model.Cursor;
 
-import javax.swing.*;
-
 public class HexCursor {
-    private Position position; // Текущая позиция курсора
-    private int length; // Общая длина данных, на которые указывает курсор
+    private final Position position;
 
     public HexCursor() {
-        this.length = 1;
-        position=new Position();
+        position = new Position();
     }
-    public void setCursorPosition(int row,int column){
+
+    public void setCursorPosition(int row, int column) {
         position.setRow(row);
         position.setColumn(column);
-
     }
-    public Position getPosition(){
+
+    public Position getPosition() {
         return position;
     }
-    public int getLength() {
-        return length;
-    }
-    public void setLength(int length) {
-        this.length = length;
-    }
 
+    public void moveRight(int maxLength) {
+        int row = position.getRow();
+        int column = position.getColumn();
+
+        if (column < maxLength - 1) {
+            position.setColumn(column + 1);
+        } else if (row < maxLength - 1) {
+            position.setRow(row + 1);
+            position.setColumn(0);
+        }
+    }
 }
