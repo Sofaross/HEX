@@ -1,15 +1,13 @@
 package controller;
 
-import model.HexEditor;
 import model.Cursor.HexCursor;
-import ui.HexTableCellRenderer;
+import model.HexEditor;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
 public class DataTableController {
     private final JTable table;
@@ -37,7 +35,7 @@ public class DataTableController {
         model=newModel;
         table.setModel(newModel);
     }
-    private int getColumnCount(){
+    public int getColumnCount(){
         return model.getColumnCount();
     }
     public void setColumnCount(int count) {
@@ -67,12 +65,19 @@ public class DataTableController {
     }
     public void addRow(Object[] rowData) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
-        Object[] modifiedRowData = new Object[rowData.length];
-        for (int i = 0; i < rowData.length; i++) {
+        Object[] modifiedRowData = new Object[model.getColumnCount()];
+
+        for (int i = 0; i < rowData.length && i < model.getColumnCount(); i++) {
+            modifiedRowData[i] = rowData[i];
+        }
+
+        for (int i = rowData.length; i < model.getColumnCount(); i++) {
             modifiedRowData[i] = "00";
         }
+
         model.addRow(modifiedRowData);
         table.setModel(model);
+
     }
     public void addColumn() {
         DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
