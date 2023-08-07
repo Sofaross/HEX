@@ -1,4 +1,6 @@
-package ui.Cursor;
+package ui;
+
+import model.Cursor.HexCursor;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -15,7 +17,7 @@ import java.awt.*;
             if (row == cursor.getPosition().getRow() && column == cursor.getPosition().getColumn()) {
                 component.setBackground(Color.YELLOW);
             } else {
-                component.setBackground(table.getBackground());  // Установка фонового цвета таблицы для остальных ячеек
+                component.setBackground(table.getBackground());
             }
             return component;
         }
