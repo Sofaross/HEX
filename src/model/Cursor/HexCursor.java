@@ -16,13 +16,13 @@ public class HexCursor {
         return position;
     }
 
-    public void moveRight(int maxLength) {
+    public void moveRight(int columnCount) {
         int row = position.getRow();
         int column = position.getColumn();
 
-        if (column < maxLength - 1) {
+        if (column < columnCount - 1) {
             position.setColumn(column + 1);
-        } else if (row < maxLength - 1) {
+        } else if (row < columnCount - 1) {
             position.setRow(row + 1);
             position.setColumn(0);
         }
