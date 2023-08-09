@@ -1,18 +1,16 @@
 package model;
 
 public class ByteSearch {
-    public static int search(byte[] array, byte[] sequence) {
-        int arrayLength = array.length;
-        int sequenceLength = sequence.length;
-
-        for (int i = 0; i <= arrayLength - sequenceLength; i++) {
-            int j;
-            for (j = 0; j < sequenceLength; j++) {
-                if (array[i + j] != sequence[j]) {
+    public static int searchWithMask(byte[] data, byte[] mask, int startIndex) {
+        for (int i = startIndex; i <= data.length - mask.length; i++) {
+            boolean found = true;
+            for (int j = 0; j < mask.length; j++) {
+                if (mask[j] != -1 && mask[j] != data[i + j]) {
+                    found = false;
                     break;
                 }
             }
-            if (j == sequenceLength) {
+            if (found) {
                 return i;
             }
         }
