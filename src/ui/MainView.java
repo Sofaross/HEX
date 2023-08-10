@@ -1,29 +1,31 @@
 package ui;
 
+import controller.ErrorHandler;
 import model.FileHandler;
 import model.HexEditor;
-import ui.Jlabel.LabelUpdater;
+import controller.LabelController;
 import controller.hexEditorListener;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-
-public class HexEditorUI extends JFrame implements hexEditorListener {
-    private final HexEditorTableView tableView;
-
+import java.util.List;
+public class MainView extends JFrame implements hexEditorListener {
+    public static final int INITIAL_COLUMN_COUNT = 8;
+    private final DataTableView tableView;
     private HexEditor hexEditor;
+    private final JScrollPane scrollPane;
     private final JLabel signedDecimalLabel;
     private final JLabel unSignedDecimalLabel;
     private final JLabel asciiLabel;
+    private final JList<String> rowHeaderList;
 
-    public HexEditorUI() {
+    public MainView() {
         setTitle("Hex Editor");
 
         // Создаем таблицу для отображения байтов
-        tableView = new HexEditorTableView();
+        tableView = new DataTableView();
         tableView.setListener(this);
-        JScrollPane scrollPane = tableView.getScrollPane();
-        tableView.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        scrollPane = tableView.getScrollPane();
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
         // Создаем панель для таблицы
@@ -36,6 +38,13 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
         gbc.fill = GridBagConstraints.BOTH;
         tablePanel.add(scrollPane, gbc);
         add(tablePanel, BorderLayout.CENTER);
+
+        //Добавляем заголовки к строкам
+        rowHeaderList = new JList<>();
+        Font font = rowHeaderList.getFont();
+        Font smallerFont = font.deriveFont(font.getSize() - 2f);
+        rowHeaderList.setFont(smallerFont);
+        rowHeaderList.setFixedCellWidth(58);
 
         // Создаем панель для отображения информации
         JPanel bottomPanel = new JPanel(new GridLayout(3, 2));
@@ -77,11 +86,16 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 hexEditor = FileHandler.openFile(hexEditor);
-                tableView.updateTableModelHex(hexEditor);
-                fileNameLabel.setText(LabelUpdater.fileName(hexEditor));
-                byteCountLabel.setText(LabelUpdater.byteCount( hexEditor));
-                //tableView.setColumnHeaders();
-                //tableView.setRowHeaders();
+                if (hexEditor != null)
+                {
+                    tableView.setHex(hexEditor);
+                    tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
+                    tableView.updateTableModelHex(hexEditor);
+                    setupRowHeaderList();
+                    fileNameLabel.setText(LabelController.fileName(hexEditor));
+                    byteCountLabel.setText(LabelController.byteCount(hexEditor));
+                    tableView.requestFocusInWindow();
+                }
             }
         });
         openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
@@ -112,21 +126,27 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (hexEditor != null) {
-                    int choice = JOptionPane.showConfirmDialog(null, "Real", "Confimation", JOptionPane.YES_NO_CANCEL_OPTION);
+                    int choice = JOptionPane.showConfirmDialog(null, "Real", "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (choice == JOptionPane.YES_OPTION) {
                         hexEditor = new HexEditor();
+                        tableView.setHex(hexEditor);
                         tableView.createNewTable();
+                        tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
                         tableView.updateTableModelHex(hexEditor);
-                        fileNameLabel.setText(LabelUpdater.fileName(hexEditor));
-                        byteCountLabel.setText(LabelUpdater.byteCount(hexEditor));
+                        setupRowHeaderList();
+                        fileNameLabel.setText(LabelController.fileName(hexEditor));
+                        byteCountLabel.setText(LabelController.byteCount(hexEditor));
                     }
                 }
                 else {
                     hexEditor = new HexEditor();
+                    tableView.setHex(hexEditor);
                     tableView.createNewTable();
+                    tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
                     tableView.updateTableModelHex(hexEditor);
-                    fileNameLabel.setText(LabelUpdater.fileName(hexEditor));
-                    byteCountLabel.setText(LabelUpdater.byteCount(hexEditor));}
+                    setupRowHeaderList();
+                    fileNameLabel.setText(LabelController.fileName(hexEditor));
+                    byteCountLabel.setText(LabelController.byteCount(hexEditor));}
             }
         });
         newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
@@ -137,30 +157,70 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
 
         JMenu chooseBytesMenu = new JMenu("Select number of bytes");
         optionsMenu.add(chooseBytesMenu);
-        int[] byteValues = {1, 2, 4, 8};
+        int[] byteValues = {2, 4, 8};
         for (int value : byteValues) {
             JMenuItem menuItem = new JMenuItem(Integer.toString(value));
             menuItem.addActionListener(e -> {
-                tableView.setColumnCount(Integer.parseInt(menuItem.getText()));
-                tableView.updateTableModelHex(hexEditor);
-                tableView.setColumnHeaders();
+                try{
+                    if (hexEditor != null){
+                        tableView.setCustomColumnCount(Integer.parseInt(menuItem.getText()));
+                        tableView.updateTableModelHex(hexEditor);
+                        setupRowHeaderList();
+                    } else {
+                        ErrorHandler.showError("Create table!");
+                    }
+                } catch (Exception ex) {
+                    ErrorHandler.showError("Byte representation change error");
+                }
+
             });
             chooseBytesMenu.add(menuItem);
         }
 
         JMenuItem addRow = new JMenuItem("Add Row");
         addRow.addActionListener(e -> {
-                if (hexEditor!=null) {
+            try {
+                if (hexEditor != null) {
                     tableView.addRow(new Object[tableView.getColumnCount()]);
-                    tableView.setRowHeaders();
+                    setupRowHeaderList();
+                } else {
+                    ErrorHandler.showError("Create table!");
                 }
-                else JOptionPane.showMessageDialog(null, "Create table!", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                ErrorHandler.showError("Error adding row: " + ex.getMessage());
+            }
         });
         optionsMenu.add(addRow);
 
         JMenuItem addColumn = new JMenuItem("Add Column");
-        addColumn.addActionListener(e -> tableView.addColumn());
+        addColumn.addActionListener(e -> {
+            try {
+                if (hexEditor != null) {
+                    tableView.addColumn();
+                    } else {
+                    ErrorHandler.showError("Create table!");
+                }
+            } catch (Exception ex) {
+                ErrorHandler.showError("Error adding column: " + ex.getMessage());
+            }
+        });
         optionsMenu.add(addColumn);
+
+        JMenuItem find = new JMenuItem("Find");
+        find.addActionListener(e -> {
+            try {
+                if (hexEditor != null) {
+                    SearchUi searchUi = new SearchUi(tableView.getController());
+                    getContentPane().add(searchUi);
+                } else {
+                    ErrorHandler.showError("Create table!");
+                }
+            } catch (Exception ex) {
+                ErrorHandler.showError("Error find: " + ex.getMessage());
+            }
+        });
+        optionsMenu.add(find);
+
 
         menuBar.add(fileMenu);
         menuBar.add(optionsMenu);
@@ -171,10 +231,15 @@ public class HexEditorUI extends JFrame implements hexEditorListener {
         setLocationRelativeTo(null);
         setVisible(true);
     }
+    private void setupRowHeaderList() {
+        String[] rowHeaders = tableView.getRowHeaders();
+        rowHeaderList.setListData(rowHeaders);
+        scrollPane.setRowHeaderView(rowHeaderList);
+    }
     @Override
     public void cellValueSelected(String cellValue) {
-        unSignedDecimalLabel.setText(LabelUpdater.hexToUnsignedDecimal(cellValue));
-        signedDecimalLabel.setText(LabelUpdater.hexToSignedDecimal(cellValue));
-        asciiLabel.setText(LabelUpdater.hexToAscii(cellValue));
+        unSignedDecimalLabel.setText(LabelController.hexToUnsignedDecimal(cellValue));
+        signedDecimalLabel.setText(LabelController.hexToSignedDecimal(cellValue));
+        asciiLabel.setText(LabelController.hexToAscii(cellValue));
     }
 }
