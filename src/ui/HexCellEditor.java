@@ -1,5 +1,7 @@
 package ui;
+import controller.DataTableController;
 import model.Cursor.HexCursor;
+import model.HexEditor;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -12,9 +14,16 @@ import java.awt.event.KeyEvent;
 
 class HexCellEditor extends DefaultCellEditor {
     private Object originalValue;
+    private HexCursor cursor;
+    private JTable table;
+    private HexEditor hexEditor;
+    private DataTableController controller;
 
-    public HexCellEditor(HexCursor cursor,JTable table ) {
+    public HexCellEditor(DataTableController controller,JTable table) {
         super(new JTextField());
+        this.controller=controller;
+        this.cursor = controller.getCursor();
+        this.table = table;
         JTextField textField = (JTextField) getComponent();
         AbstractDocument doc = (AbstractDocument) textField.getDocument();
         doc.setDocumentFilter(new HexInputDocumentFilter(2));
@@ -38,6 +47,26 @@ class HexCellEditor extends DefaultCellEditor {
 
             }
         });
+    }
+    @Override
+    public boolean stopCellEditing() {
+        boolean result = super.stopCellEditing();
+
+        if (result) {
+            int currentRow = cursor.getPosition().getRow();
+            int currentColumn = cursor.getPosition().getColumn();
+
+            if (currentRow != -1 && currentColumn != -1) {
+                byte newValue = (byte) Integer.parseInt((String) getCellEditorValue(), 16);
+                hexEditor.setByte(currentRow * table.getColumnCount() + currentColumn, newValue);
+                cursor.setCursorPosition(currentRow, currentColumn);
+            }
+        }
+        return result;
+    }
+    public void setHexEditor(HexEditor hexEditor) {
+        this.hexEditor = hexEditor;
+        controller.setHexEditor(hexEditor);
     }
 
     @Override
@@ -90,4 +119,5 @@ class HexInputDocumentFilter extends DocumentFilter {
         }
         insertString(fb, offset, text, attrs);
     }
+
 }

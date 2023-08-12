@@ -8,7 +8,6 @@ import controller.hexEditorListener;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 public class MainView extends JFrame implements hexEditorListener {
     public static final int INITIAL_COLUMN_COUNT = 8;
     private final DataTableView tableView;
@@ -131,7 +130,6 @@ public class MainView extends JFrame implements hexEditorListener {
                         hexEditor = new HexEditor();
                         tableView.setHex(hexEditor);
                         tableView.createNewTable();
-                        tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
                         tableView.updateTableModelHex(hexEditor);
                         setupRowHeaderList();
                         fileNameLabel.setText(LabelController.fileName(hexEditor));
@@ -141,8 +139,8 @@ public class MainView extends JFrame implements hexEditorListener {
                 else {
                     hexEditor = new HexEditor();
                     tableView.setHex(hexEditor);
-                    tableView.createNewTable();
                     tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
+                    tableView.createNewTable();
                     tableView.updateTableModelHex(hexEditor);
                     setupRowHeaderList();
                     fileNameLabel.setText(LabelController.fileName(hexEditor));
@@ -181,8 +179,9 @@ public class MainView extends JFrame implements hexEditorListener {
         addRow.addActionListener(e -> {
             try {
                 if (hexEditor != null) {
-                    tableView.addRow(new Object[tableView.getColumnCount()]);
+                    tableView.addRow();
                     setupRowHeaderList();
+                    byteCountLabel.setText(LabelController.byteCount(hexEditor));
                 } else {
                     ErrorHandler.showError("Create table!");
                 }
@@ -197,7 +196,8 @@ public class MainView extends JFrame implements hexEditorListener {
             try {
                 if (hexEditor != null) {
                     tableView.addColumn();
-                    } else {
+                    byteCountLabel.setText(LabelController.byteCount(hexEditor));
+                } else {
                     ErrorHandler.showError("Create table!");
                 }
             } catch (Exception ex) {

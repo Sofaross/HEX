@@ -1,45 +1,41 @@
 package controller;
 
+import model.ByteSearch;
 import model.Cursor.HexCursor;
 import model.HexEditor;
+import ui.HighlightedCellRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataTableController {
     private final JTable table;
     private DefaultTableModel model;
     private hexEditorListener listener;
     private final HexCursor cursor;
+    private HexEditor hexEditor;
 
     public DataTableController(JTable table) {
         this.table = table;
         model = (DefaultTableModel) table.getModel();
         cursor = new HexCursor();
+
     }
     public void createNewTable() {
-        setColumnHeaders();
-        DefaultTableModel newModel = new DefaultTableModel();
-        for (int i = 0; i < getColumnCount(); i++) {
-            newModel.addColumn(getColumnHeaders()[i]);
-        }
-
-        Object[] rowData = new Object[getColumnCount()];
-        for (int i = 0; i < getColumnCount(); i++) {
-            rowData[i] = "00";
-        }
-        newModel.addRow(rowData);
-        model=newModel;
-        table.setModel(newModel);
+        hexEditor.createEmptyDataArray(getColumnCount());
+        updateTableModelHex(hexEditor);
     }
     public int getColumnCount(){
         return model.getColumnCount();
     }
-    public void setColumnCount(int count) {
+    public void setCustomColumnCount(int count) {
         model.setColumnCount(count);
+        table.setModel(model);
     }
     public String[] getColumnHeaders() {
         String[] columnHeaders = new String[getColumnCount()];
@@ -47,11 +43,6 @@ public class DataTableController {
             columnHeaders[i] = Integer.toString(i % 256);
         }
         return columnHeaders;
-    }
-    public void setColumnHeaders(){
-        String[] columnHeaders = getColumnHeaders();
-        model = new DefaultTableModel(null, columnHeaders);
-        table.setModel(model);
     }
     public String[] getRowHeaders() {
         String[] rowHeaders = new String[table.getRowCount()];
@@ -63,47 +54,30 @@ public class DataTableController {
         }
         return rowHeaders;
     }
-    public void addRow(Object[] rowData) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        Object[] modifiedRowData = new Object[model.getColumnCount()];
-
-        for (int i = 0; i < rowData.length && i < model.getColumnCount(); i++) {
-            modifiedRowData[i] = rowData[i];
-        }
-
-        for (int i = rowData.length; i < model.getColumnCount(); i++) {
-            modifiedRowData[i] = "00";
-        }
-
-        model.addRow(modifiedRowData);
-        table.setModel(model);
-
+    public void addRow() {
+        hexEditor.addRow(getColumnCount());
+        updateTableModelHex(hexEditor);
     }
     public void addColumn() {
-        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-        int newColumnCount = tableModel.getColumnCount() + 1;
-
-        tableModel.addColumn(getColumnCount());
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            tableModel.setValueAt("00", row, newColumnCount - 1);
-        }
-
-        TableColumn newColumn = table.getColumnModel().getColumn(newColumnCount - 1);
-        newColumn.setCellEditor(new DefaultCellEditor(new JTextField()));
-
-        setColumnCount(newColumnCount);
+        setCustomColumnCount(table.getColumnCount()+1);
+        hexEditor.addColumn(getColumnCount()-1);
+        setCustomColumnCount(table.getColumnCount());
+        updateTableModelHex(hexEditor);
     }
 
     public void updateTableModelHex(HexEditor hexEditor) {
+        if (hexEditor == null) {
+            ErrorHandler.showError("HexEditor is null");
+            return;
+        }
         if (hexEditor.getByteCount() != 0 ) {
             try {
-                int numColumns = getColumnCount();
+                int numColumns = table.getColumnCount();
                 int numRows = (int) Math.ceil((double) hexEditor.getByteCount()/ numColumns);
 
                 String[][] hexData = hexEditor.updateDataHex(numRows,numColumns);
 
-                DefaultTableModel model = new DefaultTableModel(hexData, getColumnHeaders());
+                model = new DefaultTableModel(hexData, getColumnHeaders());
                 table.setModel(model);
 
             } catch (Exception e) {
@@ -131,5 +105,44 @@ public class DataTableController {
 
     public HexCursor getCursor() {
         return cursor;
+    }
+    public void setHexEditor(HexEditor hexEditor) {
+        this.hexEditor = hexEditor;
+    }
+    public List<int[]> findCellsWithMask(byte[] mask) {
+        List<int[]> foundCells = new ArrayList<>();
+        byte[] data = hexEditor.getData();
+
+        int startIndex = 0;
+        while (startIndex <= data.length - mask.length) {
+            int index = ByteSearch.searchWithMask(data, mask, startIndex);
+            if (index != -1) {
+                List<int[]> sequenceCells = new ArrayList<>();
+                for (int j = 0; j < mask.length; j++) {
+                    int row = index / getColumnCount();
+                    int column = index % getColumnCount();
+                    sequenceCells.add(new int[]{row, column});
+                    index++;
+                }
+                foundCells.addAll(sequenceCells);
+                startIndex = index;
+            } else {
+                break;
+            }
+        }
+        return foundCells;
+    }
+
+    public void highlightCells(List<int[]> cells) {
+        HighlightedCellRenderer renderer = new HighlightedCellRenderer();
+        for (int[] cell : cells) {
+            int row = cell[0];
+            int column = cell[1];
+
+            Component cellComponent = table.prepareRenderer(renderer, row, column);
+            cellComponent.setBackground(Color.GREEN);
+            table.revalidate();
+            table.repaint();
+        }
     }
 }
