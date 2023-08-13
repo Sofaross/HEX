@@ -1,5 +1,4 @@
 package model;
-
 import controller.ErrorHandler;
 
 import javax.swing.*;
@@ -8,7 +7,7 @@ import java.io.File;
 public class FileHandler {
     public static void saveFile(HexEditor hexEditor) {
         if (hexEditor == null) {
-            ErrorHandler.showError("File not create!");
+            ErrorHandler.showError("File not created!");
             return;
         }
         try {
@@ -22,18 +21,26 @@ public class FileHandler {
         }
     }
 
+    public static File chooseFileForSaving() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save File");
+        int userSelection = fileChooser.showSaveDialog(null);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
+    }
+
     public static void saveFileAs(HexEditor hexEditor) {
         try {
-            if (hexEditor != null) {
-                JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setDialogTitle("Save File");
-                int userSelection = fileChooser.showSaveDialog(null);
-                if (userSelection == JFileChooser.APPROVE_OPTION) {
-                    File fileToSave = fileChooser.getSelectedFile();
-                    hexEditor.write(fileToSave);
-                }
-            } else {
-                throw new NullPointerException("File not create!");
+            if (hexEditor == null) {
+                ErrorHandler.showError("File not created!");
+                return;
+            }
+
+            File fileToSave = chooseFileForSaving();
+            if (fileToSave != null) {
+                hexEditor.write(fileToSave);
             }
         } catch (Exception e) {
             ErrorHandler.showError("Error saving file: " + e.getMessage());
@@ -42,28 +49,24 @@ public class FileHandler {
 
     public static HexEditor openFile(HexEditor hexEditor) {
         try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Open file");
-            int userSelection = fileChooser.showOpenDialog(null);
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                File fileToOpen = fileChooser.getSelectedFile();
-                if (fileToOpen.length() == 0) {
-                    ErrorHandler.showError("Selected file is empty");
-                } else {
-                    hexEditor = new HexEditor(fileToOpen.getAbsolutePath());
-                }
-            } else if (userSelection == JFileChooser.CANCEL_OPTION) {
-                ErrorHandler.showError("No file selected");
+            File fileToOpen = chooseFileForOpening();
+            if (fileToOpen != null && fileToOpen.length() > 0) {
+                return new HexEditor(fileToOpen.getAbsolutePath());
+            } else {
+                ErrorHandler.showError("Selected file is empty");
             }
-
-            if (hexEditor == null) {
-                throw new NullPointerException("hexEditor is null");
-            }
-
-            return hexEditor;
         } catch (Exception e) {
             ErrorHandler.showError("Error opening file: " + e.getMessage());
-            return null;
         }
+        return hexEditor;
+    }
+    public static File chooseFileForOpening() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Open file");
+        int userSelection = fileChooser.showOpenDialog(null);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
     }
 }
