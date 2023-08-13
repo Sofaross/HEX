@@ -2,22 +2,22 @@ package ui;
 
 import controller.DataTableController;
 import controller.hexEditorListener;
-import model.HexEditor;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class DataTableView extends JTable {
     private final JTable table;
     private final DataTableController controller;
     private final JScrollPane scrollPane;
-    private HexCellEditor hexCellEditor;
+    private final DefaultTableModel model;
     public DataTableView() {
         table = new JTable();
         scrollPane = new JScrollPane(table);
         controller = new DataTableController(table);
+        model = (DefaultTableModel) table.getModel();
         initTable();
     }
-
     private void initTable() {
         table.setShowGrid(false);
         table.setGridColor(Color.BLACK);
@@ -27,24 +27,30 @@ public class DataTableView extends JTable {
         table.getSelectionModel().addListSelectionListener(controller.selectionListener);
         table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
         table.setSurrendersFocusOnKeystroke(true);
-        hexCellEditor = new HexCellEditor(controller,table);
-        table.setDefaultEditor(Object.class,hexCellEditor);
+        HexCellEditor hexCellEditor = new HexCellEditor(controller, table);
+        hexCellEditor.setController(controller); // Установите контроллер
+        table.setDefaultEditor(Object.class, hexCellEditor);
         table.setDefaultRenderer(Object.class, new HexTableCellRenderer(controller.getCursor()));
-        }
+    }
     public String[] getRowHeaders() {
         return controller.getRowHeaders();
     }
     public void setCustomColumnCount(int count) {
-        controller.setCustomColumnCount(count);
+        model.setColumnCount(count);
+        table.setModel(model);
     }
     public void createNewTable() {
-       controller.createNewTable();
+        controller.createNewTable();
+        updateTableModelHex();
     }
     public void addRow() {
         controller.addRow();
+        updateTableModelHex();
     }
     public void addColumn() {
-       controller.addColumn();
+        setCustomColumnCount(table.getColumnCount()+1);
+        controller.addColumn();
+        updateTableModelHex();
     }
     public JScrollPane getScrollPane() {
         return scrollPane;
@@ -52,14 +58,26 @@ public class DataTableView extends JTable {
     public void setListener(hexEditorListener listener) {
         controller.setListener(listener);
     }
-    protected void updateTableModelHex(HexEditor hexEditor) {
-        controller.updateTableModelHex(hexEditor);
-    }
     protected DataTableController getController(){
         return controller;
     }
-    public void setHex(HexEditor hexEditor){
-        controller.setHexEditor(hexEditor);
-        hexCellEditor.setHexEditor(hexEditor);
+    public void updateTableModelHex() {
+        if (controller.getHexEditor() == null) {
+            throw new IllegalArgumentException("HexEditor is null");
+        }
+
+        if (controller.getHexEditor().getByteCount() != 0) {
+            try {
+                int numColumns = table.getColumnCount();
+                int numRows = (int) Math.ceil((double) controller.getHexEditor().getByteCount() / numColumns);
+
+                String[][] hexData = controller.getHexEditor().updateDataHex(numRows, numColumns);
+
+                model.setDataVector(hexData, controller.getColumnHeaders());
+
+            } catch (Exception e) {
+                throw new RuntimeException("Error updating table model", e);
+            }
+        }
     }
 }
