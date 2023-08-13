@@ -14,16 +14,13 @@ import java.awt.event.KeyEvent;
 
 class HexCellEditor extends DefaultCellEditor {
     private Object originalValue;
-    private HexCursor cursor;
-    private JTable table;
-    private HexEditor hexEditor;
+    private final HexCursor cursor;
     private DataTableController controller;
 
     public HexCellEditor(DataTableController controller,JTable table) {
         super(new JTextField());
         this.controller=controller;
         this.cursor = controller.getCursor();
-        this.table = table;
         JTextField textField = (JTextField) getComponent();
         AbstractDocument doc = (AbstractDocument) textField.getDocument();
         doc.setDocumentFilter(new HexInputDocumentFilter(2));
@@ -58,14 +55,17 @@ class HexCellEditor extends DefaultCellEditor {
 
             if (currentRow != -1 && currentColumn != -1) {
                 byte newValue = (byte) Integer.parseInt((String) getCellEditorValue(), 16);
-                hexEditor.setByte(currentRow * table.getColumnCount() + currentColumn, newValue);
+                controller.setByteAtPosition(currentRow, currentColumn, newValue);
                 cursor.setCursorPosition(currentRow, currentColumn);
             }
         }
         return result;
     }
+    public void setController(DataTableController controller) {
+        this.controller = controller;
+    }
+
     public void setHexEditor(HexEditor hexEditor) {
-        this.hexEditor = hexEditor;
         controller.setHexEditor(hexEditor);
     }
 
