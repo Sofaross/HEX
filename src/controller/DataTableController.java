@@ -8,34 +8,33 @@ import ui.HighlightedCellRenderer;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DataTableController {
     private final JTable table;
-    private DefaultTableModel model;
     private hexEditorListener listener;
     private final HexCursor cursor;
     private HexEditor hexEditor;
-
     public DataTableController(JTable table) {
         this.table = table;
-        model = (DefaultTableModel) table.getModel();
         cursor = new HexCursor();
-
+    }
+    public HexCursor getCursor() {
+        return cursor;
+    }
+    public void setHexEditor(HexEditor hexEditor) {
+        this.hexEditor = hexEditor;
+    }
+    public HexEditor getHexEditor(){
+        return hexEditor;
+    }
+    public int getColumnCount(){
+        return table.getModel().getColumnCount();
     }
     public void createNewTable() {
         hexEditor.createEmptyDataArray(getColumnCount());
-        updateTableModelHex(hexEditor);
-    }
-    public int getColumnCount(){
-        return model.getColumnCount();
-    }
-    public void setCustomColumnCount(int count) {
-        model.setColumnCount(count);
-        table.setModel(model);
     }
     public String[] getColumnHeaders() {
         String[] columnHeaders = new String[getColumnCount()];
@@ -56,37 +55,14 @@ public class DataTableController {
     }
     public void addRow() {
         hexEditor.addRow(getColumnCount());
-        updateTableModelHex(hexEditor);
     }
     public void addColumn() {
-        setCustomColumnCount(table.getColumnCount()+1);
         hexEditor.addColumn(getColumnCount()-1);
-        setCustomColumnCount(table.getColumnCount());
-        updateTableModelHex(hexEditor);
-    }
-
-    public void updateTableModelHex(HexEditor hexEditor) {
-        if (hexEditor == null) {
-            ErrorHandler.showError("HexEditor is null");
-            return;
-        }
-        if (hexEditor.getByteCount() != 0 ) {
-            try {
-                int numColumns = table.getColumnCount();
-                int numRows = (int) Math.ceil((double) hexEditor.getByteCount()/ numColumns);
-
-                String[][] hexData = hexEditor.updateDataHex(numRows,numColumns);
-
-                model = new DefaultTableModel(hexData, getColumnHeaders());
-                table.setModel(model);
-
-            } catch (Exception e) {
-                ErrorHandler.showError("Error updating table model: " + e.getMessage());            }
-        }
     }
     public void setListener(hexEditorListener listener) {
         this.listener=listener;
     }
+
     public ListSelectionListener selectionListener = new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
             int rowIndex = table.getSelectedRow();
@@ -102,12 +78,10 @@ public class DataTableController {
             }
         }
     };
-
-    public HexCursor getCursor() {
-        return cursor;
-    }
-    public void setHexEditor(HexEditor hexEditor) {
-        this.hexEditor = hexEditor;
+    public void setByteAtPosition(int row, int column, byte value) {
+        if (hexEditor != null) {
+            hexEditor.setByte(row * getColumnCount() + column, value);
+        }
     }
     public List<int[]> findCellsWithMask(byte[] mask) {
         List<int[]> foundCells = new ArrayList<>();
