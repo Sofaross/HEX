@@ -49,10 +49,10 @@ public class DataTableController {
         return rowHeaders;
     }
     public void addRow() {
-        hexEditor.addRow(getColumnCount());
+        hexEditor.expandRowData(getColumnCount());
     }
     public void addColumn() {
-        hexEditor.addColumn(getColumnCount()-1);
+        hexEditor.expandColumnData(getColumnCount()-1);
     }
     public void setListener(hexEditorListener listener) {
         this.listener=listener;
@@ -60,22 +60,34 @@ public class DataTableController {
 
     public ListSelectionListener selectionListener = new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-            int rowIndex = table.getSelectedRow();
-            int columnIndex = table.getSelectedColumn();
-            if (rowIndex >= 0 && columnIndex >= 0) {
-                cursor.getPosition().setRow(rowIndex);
-                cursor.getPosition().setColumn(columnIndex);
-                table.repaint();
-                String cellValue = (String) table.getValueAt(rowIndex, columnIndex);
-                if (listener != null) {
-                    listener.cellValueSelected(cellValue);
-                }
-            }
+            handleValueChangedEvent();
         }
     };
+    private void handleValueChangedEvent() {
+        int rowIndex = table.getSelectedRow();
+        int columnIndex = table.getSelectedColumn();
+        if (isValidCellIndex(rowIndex, columnIndex)) {
+            updateCursorPosition(rowIndex, columnIndex);
+            updateCellValue(rowIndex, columnIndex);
+        }
+    }
+    private boolean isValidCellIndex(int row, int column) {
+        return row >= 0 && column >= 0;
+    }
+    private void updateCursorPosition(int row, int column) {
+        cursor.getPosition().setRow(row);
+        cursor.getPosition().setColumn(column);
+        table.repaint();
+    }
+    private void updateCellValue(int row, int column) {
+        String cellValue = (String) table.getValueAt(row, column);
+        if (listener != null) {
+            listener.cellValueSelected(cellValue);
+        }
+    }
     public void setByteAtPosition(int row, int column, byte value) {
         if (hexEditor != null) {
-            hexEditor.setByte(row * getColumnCount() + column, value);
+            hexEditor.setDataByte(row * getColumnCount() + column, value);
         }
     }
 }

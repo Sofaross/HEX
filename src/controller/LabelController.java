@@ -5,7 +5,7 @@ public class LabelController {
     private static final int MAX_ASCII_VALUE = 127;
     private static final int ASCII_OFFSET = 256;
 
-    public static String byteCount(HexEditor hexEditor) {
+    public static String getByteCountLabel(HexEditor hexEditor) {
         try {
             int byteCount = hexEditor.getByteCount();
             return ("Byte count: " + byteCount);
@@ -15,7 +15,7 @@ public class LabelController {
         return "";
     }
 
-    public static String hexToUnsignedDecimal(String hexByte) {
+    public static String hexToUnsignedDecimalString(String hexByte) {
         if (hexByte != null && !hexByte.isEmpty()) {
             int decimalValue = Integer.parseInt(hexByte, 16);
             return ("Signed: " + decimalValue);
@@ -23,7 +23,7 @@ public class LabelController {
         return "";
     }
 
-    public static String hexToSignedDecimal(String hexByte) {
+    public static String hexToSignedDecimalString(String hexByte) {
         if (hexByte != null && !hexByte.isEmpty()) {
             int decimalValue = Integer.parseInt(hexByte, 16);
             if (decimalValue > MAX_ASCII_VALUE) {
@@ -34,14 +34,14 @@ public class LabelController {
         return "";
     }
 
-    public static String fileName(HexEditor hexEditor) {
-        if (hexEditor.getFileName() != null) {
-            return ("File: " + hexEditor.getFileName().getName());
+    public static String getFileNameLabel(HexEditor hexEditor) {
+        if (hexEditor.getFile() != null) {
+            return ("File: " + hexEditor.getFile().getName());
         }
         return "";
     }
 
-    public static String hexToAscii(String cellValue) {
+    public static String hexToAsciiString(String cellValue) {
         if (cellValue != null && !cellValue.isEmpty()) {
             try {
                 int decimalValue = Integer.parseInt(cellValue, 16);
