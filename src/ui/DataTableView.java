@@ -5,6 +5,7 @@ import controller.hexEditorListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 public class DataTableView extends JTable {
     private final JTable table;
@@ -28,7 +29,7 @@ public class DataTableView extends JTable {
         table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
         table.setSurrendersFocusOnKeystroke(true);
         HexCellEditor hexCellEditor = new HexCellEditor(controller, table);
-        hexCellEditor.setController(controller); // Установите контроллер
+        hexCellEditor.setController(controller);
         table.setDefaultEditor(Object.class, hexCellEditor);
         table.setDefaultRenderer(Object.class, new HexTableCellRenderer(controller.getCursor()));
     }
@@ -78,6 +79,16 @@ public class DataTableView extends JTable {
             } catch (Exception e) {
                 throw new RuntimeException("Error updating table model", e);
             }
+        }
+    }
+    public void highlightCells(List<int[]> cells) {
+        HighlightedCellRenderer renderer = new HighlightedCellRenderer();
+        for (int[] cell : cells) {
+            int row = cell[0];
+            int column = cell[1];
+
+            Component cellComponent = table.prepareRenderer(renderer, row, column);
+            cellComponent.setBackground(Color.GREEN);
         }
     }
 }

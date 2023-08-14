@@ -1,11 +1,9 @@
 package ui;
 
-import controller.DataTableController;
-import controller.ErrorHandler;
+import controller.*;
 import model.FileHandler;
 import model.HexEditor;
-import controller.LabelController;
-import controller.hexEditorListener;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -209,8 +207,10 @@ public class MainView extends JFrame implements hexEditorListener {
         find.addActionListener(e -> {
             try {
                 if (controller.getHexEditor() != null) {
-                    SearchUi searchUi = new SearchUi(controller);
+                    FindController findController=new FindController(controller,tableView);
+                    SearchUi searchUi = new SearchUi(findController);
                     getContentPane().add(searchUi);
+                    findController.performSearchWithMask();
                 } else {
                     ErrorHandler.showError("Create table!");
                 }
@@ -219,7 +219,6 @@ public class MainView extends JFrame implements hexEditorListener {
             }
         });
         optionsMenu.add(find);
-
 
         menuBar.add(fileMenu);
         menuBar.add(optionsMenu);

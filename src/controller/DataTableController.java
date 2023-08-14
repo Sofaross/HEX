@@ -1,18 +1,13 @@
 package controller;
 
-import model.ByteSearch;
 import model.Cursor.HexCursor;
 import model.HexEditor;
-import ui.HighlightedCellRenderer;
-
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DataTableController {
+    private static final int MAX_BYTE_VALUE = 256;
     private final JTable table;
     private hexEditorListener listener;
     private final HexCursor cursor;
@@ -39,7 +34,7 @@ public class DataTableController {
     public String[] getColumnHeaders() {
         String[] columnHeaders = new String[getColumnCount()];
         for (int i = 0; i < getColumnCount(); i++) {
-            columnHeaders[i] = Integer.toString(i % 256);
+            columnHeaders[i] = Integer.toString(i % MAX_BYTE_VALUE);
         }
         return columnHeaders;
     }
@@ -81,42 +76,6 @@ public class DataTableController {
     public void setByteAtPosition(int row, int column, byte value) {
         if (hexEditor != null) {
             hexEditor.setByte(row * getColumnCount() + column, value);
-        }
-    }
-    public List<int[]> findCellsWithMask(byte[] mask) {
-        List<int[]> foundCells = new ArrayList<>();
-        byte[] data = hexEditor.getData();
-
-        int startIndex = 0;
-        while (startIndex <= data.length - mask.length) {
-            int index = ByteSearch.searchWithMask(data, mask, startIndex);
-            if (index != -1) {
-                List<int[]> sequenceCells = new ArrayList<>();
-                for (int j = 0; j < mask.length; j++) {
-                    int row = index / getColumnCount();
-                    int column = index % getColumnCount();
-                    sequenceCells.add(new int[]{row, column});
-                    index++;
-                }
-                foundCells.addAll(sequenceCells);
-                startIndex = index;
-            } else {
-                break;
-            }
-        }
-        return foundCells;
-    }
-
-    public void highlightCells(List<int[]> cells) {
-        HighlightedCellRenderer renderer = new HighlightedCellRenderer();
-        for (int[] cell : cells) {
-            int row = cell[0];
-            int column = cell[1];
-
-            Component cellComponent = table.prepareRenderer(renderer, row, column);
-            cellComponent.setBackground(Color.GREEN);
-            table.revalidate();
-            table.repaint();
         }
     }
 }
