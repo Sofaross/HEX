@@ -17,6 +17,7 @@ public class DataManipulationHelper {
         this.table = table;
     }
 
+
     public void deleteSelectedBlock(int startRow, int startColumn, int endRow, int endColumn, boolean offset) {
         controller.deleteBlock(startRow, startColumn, endRow, endColumn, offset);
     }
