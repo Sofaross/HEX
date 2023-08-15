@@ -29,14 +29,7 @@ public class HexEditor {
             System.out.println("Ошибка: недопустимый индекс");
         }
     }
-    public void deleteByte(int index) {
-        if (isDataValid(index)) {
-            byte[] newData = new byte[data.length - 1];
-            System.arraycopy(data, 0, newData, 0, index);
-            System.arraycopy(data, index + 1, newData, index, data.length - index - 1);
-            data = newData;
-        }
-    }
+
     public void zeroFillRange(int startIndex, int endIndex) {
         if (isDataValid(startIndex) && isDataValid(endIndex)) {
             for (int i = startIndex; i <= endIndex; i++) {
@@ -55,6 +48,29 @@ public class HexEditor {
             data = newData;
         }
     }
+    public void replaceBytes(int index, byte[] newBytes) {
+        if (isDataValid(index) && newBytes != null) {
+            int endIndex = index + newBytes.length - 1;
+            if (isDataValid(endIndex)) {
+                System.arraycopy(newBytes, 0, data, index, newBytes.length);
+            } else {
+                ErrorHandler.showError("Ошибка: недопустимый диапазон для замены");
+            }
+        }
+    }
+
+    public void insertBytes(int index, byte[] newBytes) {
+        if (newBytes != null && index >= 0 && index <= data.length) {
+            byte[] newData = new byte[data.length + newBytes.length];
+            System.arraycopy(data, 0, newData, 0, index);
+            System.arraycopy(newBytes, 0, newData, index, newBytes.length);
+            System.arraycopy(data, index, newData, index + newBytes.length, data.length - index);
+            data = newData;
+        } else {
+            ErrorHandler.showError("Ошибка: недопустимые параметры для вставки");
+        }
+    }
+
 
     public byte[] getData() {
         return data;

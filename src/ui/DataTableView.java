@@ -6,13 +6,11 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -58,14 +56,28 @@ public class DataTableView extends JTable {
         table.setSurrendersFocusOnKeystroke(true);
         addEscapeKeyListener();
         JPopupMenu contextMenu = new JPopupMenu();
-        JMenuItem deleteWithShiftItem = new JMenuItem("Delete with offset");
-        JMenuItem deleteWithoutShiftItem = new JMenuItem("Delete without offset");
 
-        contextMenu.add(deleteWithShiftItem);
-        contextMenu.add(deleteWithoutShiftItem);
+        JMenuItem cutItemWithoutOffsetItem = new JMenuItem("Cut without offset");
+        JMenuItem cutItemWithOffsetItem = new JMenuItem("Cut with offset");
+        JMenuItem deleteWithOffsetItem = new JMenuItem("Delete with offset");
+        JMenuItem deleteWithoutOffsetItem = new JMenuItem("Delete without offset");
+        JMenuItem pasteWithOffsetItem = new JMenuItem("Paste with offset");
+        JMenuItem pasteWithoutOffsetItem = new JMenuItem("Paste without offset");
 
-        deleteWithShiftItem.addActionListener(e -> handleDeleteAction(true));
-        deleteWithoutShiftItem.addActionListener(e -> handleDeleteAction(false));
+        contextMenu.add(cutItemWithOffsetItem);
+        contextMenu.add(cutItemWithoutOffsetItem);
+        contextMenu.add(pasteWithoutOffsetItem);
+        contextMenu.add(pasteWithOffsetItem);
+        contextMenu.add(deleteWithoutOffsetItem);
+        contextMenu.add(deleteWithOffsetItem);
+
+
+        deleteWithOffsetItem.addActionListener(e -> handleDeleteAction(true));
+        deleteWithoutOffsetItem.addActionListener(e -> handleDeleteAction(false));
+        pasteWithOffsetItem.addActionListener(e -> pasteCellsFromClipboard(true));
+        pasteWithoutOffsetItem.addActionListener(e -> pasteCellsFromClipboard(false));  
+        cutItemWithOffsetItem.addActionListener(e -> handleCutAction(true));
+        cutItemWithoutOffsetItem.addActionListener(e -> handleCutAction(false));
 
         table.setComponentPopupMenu(contextMenu);
         table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), "copy");
@@ -75,17 +87,19 @@ public class DataTableView extends JTable {
                 copySelectedCellsToClipboard();
             }
         });
-
-        table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_V, KeyEvent.CTRL_DOWN_MASK), "paste");
-        table.getActionMap().put("paste", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pasteCellsFromClipboard();
-            }
-        });
     }
 
-    private void handleDeleteAction(boolean shift) {
+    private void handleCutAction(boolean offset) {
+        int[] selectedRows = table.getSelectedRows();
+        int[] selectedColumns = table.getSelectedColumns();
+
+        if (selectedRows.length > 0 && selectedColumns.length > 0) {
+            copySelectedCellsToClipboard();
+            handleDeleteAction(offset);
+        }
+    }
+
+    private void handleDeleteAction(boolean offset) {
         int[] selectedRows = table.getSelectedRows();
         int[] selectedColumns = table.getSelectedColumns();
 
@@ -95,7 +109,7 @@ public class DataTableView extends JTable {
             int endRow = selectedRows[selectedRows.length - 1];
             int endColumn = selectedColumns[selectedColumns.length - 1];
 
-            deleteSelectedBlock(startRow, startColumn, endRow, endColumn, shift);
+            deleteSelectedBlock(startRow, startColumn, endRow, endColumn, offset);
         }
     }
 
@@ -218,38 +232,44 @@ public class DataTableView extends JTable {
             for (int row : selectedRows) {
                 for (int column : selectedColumns) {
                     Object cellValue = table.getValueAt(row, column);
-                    copiedText.append(cellValue).append('\t'); // Separate values by tabs
+                    copiedText.append(cellValue).append('\t');
                 }
-                copiedText.append('\n'); // Separate rows by newlines
+                copiedText.append('\n');
             }
-
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(new StringSelection(copiedText.toString()), null);
         }
     }
-    private void pasteCellsFromClipboard() {
+    private void pasteCellsFromClipboard(boolean offset) {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         Transferable transferable = clipboard.getContents(null);
 
         if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             try {
                 String clipboardData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
-                String[] rows = clipboardData.split("\n");
+                String[] rowStrings = clipboardData.split("[\\s\\t\\n]+");
 
+                byte[] byteArray = new byte[rowStrings.length];
+                for (int i = 0; i < rowStrings.length; i++) {
+                    try {
+                        int decimalValue = Integer.parseInt(rowStrings[i], 16);
+                        byteArray[i] = (byte) decimalValue;
+                    } catch (NumberFormatException e) {
+                        byteArray[i] = 0;
+                    }
+                }
                 int selectedRow = table.getSelectedRow();
                 int selectedColumn = table.getSelectedColumn();
 
-                for (int i = 0; i < rows.length; i++) {
-                    String[] values = rows[i].split("\t");
-                    for (int j = 0; j < values.length; j++) {
-                        if (selectedRow + i < table.getRowCount() && selectedColumn + j < table.getColumnCount()) {
-                            String trimmedValue = values[j].trim();
-                            table.setValueAt(trimmedValue, selectedRow + i, selectedColumn + j);
-                        }
-                    }
+                if (selectedRow >= 0 && selectedColumn >= 0) {
+                    controller.insertBytesAtPosition(selectedRow, selectedColumn, byteArray, offset);
+                    updateTableModelHex();
+                } else {
+                    System.out.println("No cell selected for paste.");
                 }
-            } catch (Exception e) {
+            } catch (NumberFormatException | UnsupportedFlavorException | IOException e) {
                 e.printStackTrace();
+                System.out.println("Error pasting data from clipboard.");
             }
         }
     }
