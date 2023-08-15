@@ -90,8 +90,8 @@ public class MainView extends JFrame implements hexEditorListener {
                     tableView.setCustomColumnCount(INITIAL_COLUMN_COUNT);
                     tableView.updateTableModelHex();
                     setupRowHeaderList();
-                    fileNameLabel.setText(LabelController.fileName(controller.getHexEditor()));
-                    byteCountLabel.setText(LabelController.byteCount(controller.getHexEditor()));
+                    fileNameLabel.setText(LabelController.getFileNameLabel(controller.getHexEditor()));
+                    byteCountLabel.setText(LabelController.getByteCountLabel(controller.getHexEditor()));
                     tableView.requestFocusInWindow();
                 }
             }
@@ -130,8 +130,8 @@ public class MainView extends JFrame implements hexEditorListener {
                         tableView.createNewTable();
                         tableView.updateTableModelHex();
                         setupRowHeaderList();
-                        fileNameLabel.setText(LabelController.fileName(controller.getHexEditor()));
-                        byteCountLabel.setText(LabelController.byteCount(controller.getHexEditor()));
+                        fileNameLabel.setText(LabelController.getFileNameLabel(controller.getHexEditor()));
+                        byteCountLabel.setText(LabelController.getByteCountLabel(controller.getHexEditor()));
                     }
                 }
                 else {
@@ -140,8 +140,8 @@ public class MainView extends JFrame implements hexEditorListener {
                     tableView.createNewTable();
                     tableView.updateTableModelHex();
                     setupRowHeaderList();
-                    fileNameLabel.setText(LabelController.fileName(controller.getHexEditor()));
-                    byteCountLabel.setText(LabelController.byteCount(controller.getHexEditor()));}
+                    fileNameLabel.setText(LabelController.getFileNameLabel(controller.getHexEditor()));
+                    byteCountLabel.setText(LabelController.getByteCountLabel(controller.getHexEditor()));}
             }
         });
         newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
@@ -178,7 +178,7 @@ public class MainView extends JFrame implements hexEditorListener {
                 if (controller.getHexEditor() != null) {
                     tableView.addRow();
                     setupRowHeaderList();
-                    byteCountLabel.setText(LabelController.byteCount(controller.getHexEditor()));
+                    byteCountLabel.setText(LabelController.getByteCountLabel(controller.getHexEditor()));
                 } else {
                     ErrorHandler.showError("Create table!");
                 }
@@ -193,7 +193,7 @@ public class MainView extends JFrame implements hexEditorListener {
             try {
                 if (controller.getHexEditor() != null) {
                     tableView.addColumn();
-                    byteCountLabel.setText(LabelController.byteCount(controller.getHexEditor()));
+                    byteCountLabel.setText(LabelController.getByteCountLabel(controller.getHexEditor()));
                 } else {
                     ErrorHandler.showError("Create table!");
                 }
@@ -236,8 +236,8 @@ public class MainView extends JFrame implements hexEditorListener {
     }
     @Override
     public void cellValueSelected(String cellValue) {
-        unSignedDecimalLabel.setText(LabelController.hexToUnsignedDecimal(cellValue));
-        signedDecimalLabel.setText(LabelController.hexToSignedDecimal(cellValue));
-        asciiLabel.setText(LabelController.hexToAscii(cellValue));
+        unSignedDecimalLabel.setText(LabelController.hexToUnsignedDecimalString(cellValue));
+        signedDecimalLabel.setText(LabelController.hexToSignedDecimalString(cellValue));
+        asciiLabel.setText(LabelController.hexToAsciiString(cellValue));
     }
 }

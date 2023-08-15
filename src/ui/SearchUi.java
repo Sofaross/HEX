@@ -14,7 +14,7 @@ public class SearchUi extends JPanel {
 
         int result = JOptionPane.showConfirmDialog(null, this, "Найти", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.OK_OPTION) {
-            controller.searchSplit(findTextField.getText());
+            controller.parseSearchText(findTextField.getText());
 
         }
         setVisible(false);

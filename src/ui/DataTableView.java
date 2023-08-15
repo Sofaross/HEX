@@ -52,6 +52,10 @@ public class DataTableView extends JTable {
         table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
         table.setSurrendersFocusOnKeystroke(true);
         addEscapeKeyListener();
+        DeleteActionHandler deleteHandler = new DeleteActionHandler(this);
+
+// Настройка обработчиков действий удаления
+        deleteHandler.setupDeleteBlockAction();
     }
 
     private void addEscapeKeyListener() {
@@ -68,6 +72,17 @@ public class DataTableView extends JTable {
     private void handleEscapeKey() {
         clearHighlight();
         table.setDefaultRenderer(Object.class, new HexTableCellRenderer(controller.getCursor()));
+    }
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
+
+    public void setListener(hexEditorListener listener) {
+        controller.setListener(listener);
+    }
+
+    protected DataTableController getController() {
+        return controller;
     }
     public String[] getRowHeaders() {
         return controller.getRowHeaders();
@@ -93,19 +108,6 @@ public class DataTableView extends JTable {
         controller.addColumn();
         updateTableModelHex();
     }
-
-    public JScrollPane getScrollPane() {
-        return scrollPane;
-    }
-
-    public void setListener(hexEditorListener listener) {
-        controller.setListener(listener);
-    }
-
-    protected DataTableController getController() {
-        return controller;
-    }
-
     public void updateTableModelHex() {
         if (controller.getHexEditor() == null) {
             throw new IllegalArgumentException("HexEditor is null");
@@ -114,17 +116,30 @@ public class DataTableView extends JTable {
         if (controller.getHexEditor().getByteCount() != 0) {
             try {
                 int numColumns = table.getColumnCount();
-                int numRows = (int) Math.ceil((double) controller.getHexEditor().getByteCount() / numColumns);
+                int numRows = calculateNumRows(controller.getHexEditor().getByteCount(), numColumns);
 
-                String[][] hexData = controller.getHexEditor().updateDataHex(numRows, numColumns);
+                String[][] hexData = calculateHexData(controller, numRows, numColumns);
 
-                model.setDataVector(hexData, controller.getColumnHeaders());
+                updateTableModel(hexData);
 
             } catch (Exception e) {
                 throw new RuntimeException("Error updating table model", e);
             }
         }
     }
+
+    private int calculateNumRows(int byteCount, int numColumns) {
+        return (int) Math.ceil((double) byteCount / numColumns);
+    }
+
+    private String[][] calculateHexData(DataTableController controller, int numRows, int numColumns) {
+        return controller.getHexEditor().convertDataToHexMatrix(numRows, numColumns);
+    }
+
+    private void updateTableModel(String[][] hexData) {
+        model.setDataVector(hexData, controller.getColumnHeaders());
+    }
+
     public void highlightCells(List<int[]> cells) {
         clearHighlight();
 
@@ -145,5 +160,21 @@ public class DataTableView extends JTable {
         highlightedCells.clear();
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
         table.repaint();
+    }
+    public void deleteSelectedBlock(int startRow, int startColumn, int endRow, int endColumn) {
+        controller.deleteBlock(startRow, startColumn, endRow, endColumn);
+    }
+
+    public void editSelectedByte(byte value) {
+        int rowIndex = getSelectedRow();
+        int columnIndex = getSelectedColumn();
+        controller.editByteValueAtPosition(rowIndex, columnIndex, value);
+    }
+
+
+    public void insertBytes(byte[] bytes, boolean replace) {
+        int rowIndex = getSelectedRow();
+        int columnIndex = getSelectedColumn();
+        controller.insertBytesAtPosition(rowIndex, columnIndex, bytes, replace);
     }
 }

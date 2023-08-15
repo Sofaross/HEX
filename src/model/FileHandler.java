@@ -11,8 +11,8 @@ public class FileHandler {
             return;
         }
         try {
-            if (hexEditor.getFileName() != null) {
-                hexEditor.write(hexEditor.getFileName());
+            if (hexEditor.getFile() != null) {
+                hexEditor.writeToFile(hexEditor.getFile());
             } else {
                 ErrorHandler.showError("No file name specified");
             }
@@ -40,7 +40,7 @@ public class FileHandler {
 
             File fileToSave = chooseFileForSaving();
             if (fileToSave != null) {
-                hexEditor.write(fileToSave);
+                hexEditor.writeToFile(fileToSave);
             }
         } catch (Exception e) {
             ErrorHandler.showError("Error saving file: " + e.getMessage());

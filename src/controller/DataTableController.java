@@ -90,4 +90,22 @@ public class DataTableController {
             hexEditor.setDataByte(row * getColumnCount() + column, value);
         }
     }
+    public void editByteValueAtPosition(int row, int column, byte value) {
+        setByteAtPosition(row, column, value);
+    }
+    public void deleteBlock(int startRow, int startColumn, int endRow, int endColumn) {
+        int i=1;
+        int startIndex = startRow*getColumnCount() +startColumn;
+        int endIndex = endRow*getColumnCount()+endColumn;
+        if (i==1){
+            hexEditor.zeroFillRange(startIndex,endIndex);
+        }
+        else{
+            hexEditor.deleteRange(startIndex,endIndex);
+        }
+    }
+
+    public void insertBytesAtPosition(int row, int column, byte[] bytes, boolean replace) {
+        // Implement the logic to insert bytes at the given position
+    }
 }
