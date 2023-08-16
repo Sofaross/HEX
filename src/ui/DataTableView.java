@@ -20,6 +20,8 @@ public class DataTableView extends JTable {
     private final DefaultTableModel model;
     private final DataManipulationHelper manipulationHelper;
     private final Set<Point> highlightedCells = new HashSet<>();
+    private int[] shiftSelectionStart;
+    private int[] shiftSelectionEnd;
 
     public DataTableView() {
         table = new JTable();

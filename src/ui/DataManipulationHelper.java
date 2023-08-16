@@ -65,16 +65,10 @@ public class DataManipulationHelper {
         if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             try {
                 String clipboardData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
-                byte[] byteArray = parseClipboardData(clipboardData);
+                byte[][] byteArray = parseClipboardDataAsBytesArray(clipboardData);
 
                 if (selectedRow >= 0 && selectedColumn >= 0) {
-                    int numRows = byteArray.length; // Each byte goes to a new row
-                    int numColumns = table.getColumnCount();
-
-                    for (int i = 0; i < numRows; i++) {
-                        byte[] dataToInsert = new byte[] { byteArray[i] };
-                        controller.insertBytesAtPosition(selectedRow + i, selectedColumn, dataToInsert, offset);
-                    }
+                    controller.insertBytesAtPosition(selectedRow, selectedColumn, byteArray, offset);
                 } else {
                     System.out.println("No cell selected for paste.");
                 }
@@ -83,21 +77,23 @@ public class DataManipulationHelper {
             }
         }
     }
-
-
-    private byte[] parseClipboardData(String clipboardData) {
-        String[] rowStrings = clipboardData.split("[\\s\\t\\n]+");
-        byte[] byteArray = new byte[rowStrings.length];
+    private byte[][] parseClipboardDataAsBytesArray(String clipboardData) {
+        String[] rowStrings = clipboardData.trim().split("\n");
+        byte[][] byteArray = new byte[rowStrings.length][];
 
         for (int i = 0; i < rowStrings.length; i++) {
-            try {
-                int decimalValue = Integer.parseInt(rowStrings[i], 16);
-                byteArray[i] = (byte) decimalValue;
-            } catch (NumberFormatException e) {
-                byteArray[i] = 0;
+            String[] columnStrings = rowStrings[i].trim().split("\\s+");
+            byteArray[i] = new byte[columnStrings.length];
+
+            for (int j = 0; j < columnStrings.length; j++) {
+                try {
+                    int decimalValue = Integer.parseInt(columnStrings[j], 16);
+                    byteArray[i][j] = (byte) decimalValue;
+                } catch (NumberFormatException e) {
+                    byteArray[i][j] = 0;
+                }
             }
         }
-
         return byteArray;
     }
 

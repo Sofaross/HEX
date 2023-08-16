@@ -113,27 +113,52 @@ public class DataTableController {
     }
 
     public void deleteBlock(int startRow, int startColumn, int endRow, int endColumn, boolean offset) {
-        int startIndex = startRow * getColumnCount() + startColumn;
-        int endIndex = endRow * getColumnCount() + endColumn;
+        int minRow = Math.min(startRow, endRow);
+        int maxRow = Math.max(startRow, endRow);
+        int minColumn = Math.min(startColumn, endColumn);
+        int maxColumn = Math.max(startColumn, endColumn);
+
         if (hexEditor == null) {
             throw new IllegalArgumentException("HexEditor is null");
         }
-        if (offset) {
-            hexEditor.deleteRange(startIndex, endIndex);
-        } else {
-            hexEditor.zeroFillRange(startIndex, endIndex);
+
+        for (int row = minRow; row <= maxRow; row++) {
+            for (int col = minColumn; col <= maxColumn; col++) {
+                int index = row * getColumnCount() + col;
+                if (offset) {
+                    hexEditor.deleteRange(index, index);
+                } else {
+                    hexEditor.zeroFillRange(index, index);
+                }
+            }
         }
     }
 
-    public void insertBytesAtPosition(int row, int column, byte[] bytes, boolean replace) {
+    public void insertBytesAtPosition(int startRow, int startColumn, byte[][] bytes, boolean replace) {
         if (hexEditor == null) {
             throw new IllegalArgumentException("HexEditor is null");
         }
-        int index = row * getColumnCount() + column;
-        if (replace) {
-            hexEditor.insertBytes(index, bytes);
-        } else {
-            hexEditor.replaceBytes(index, bytes);
+
+        int numRows = bytes.length;
+        int numColumns = bytes[0].length;
+
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numColumns; col++) {
+                int rowIndex = startRow + row;
+                int columnIndex = startColumn + col;
+
+                if (rowIndex >= 0 && rowIndex < table.getRowCount() && columnIndex >= 0 && columnIndex < table.getColumnCount()) {
+                    int dataIndex = rowIndex * getColumnCount() + columnIndex;
+                    byte byteValue = bytes[row][col];
+
+                    if (replace) {
+                        hexEditor.insertBytes(dataIndex, new byte[] { byteValue });
+                    } else {
+                        hexEditor.replaceBytes(dataIndex, new byte[] { byteValue });
+
+                    }
+                }
+            }
         }
     }
 }
