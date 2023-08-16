@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.io.File;
 
 public class FileHandler {
+
     public static void saveFile(HexEditor hexEditor) {
         if (hexEditor == null) {
             ErrorHandler.showError("File not created!");
@@ -60,6 +61,7 @@ public class FileHandler {
         }
         return hexEditor;
     }
+
     public static File chooseFileForOpening() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open file");

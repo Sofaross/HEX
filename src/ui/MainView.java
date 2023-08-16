@@ -9,23 +9,38 @@ import java.awt.*;
 import java.awt.event.*;
 public class MainView extends JFrame implements hexEditorListener {
     public static final int INITIAL_COLUMN_COUNT = 8;
-    private final DataTableView tableView;
-    private final JScrollPane scrollPane;
-    private final JLabel signedDecimalLabel;
-    private final JLabel unSignedDecimalLabel;
-    private final JLabel asciiLabel;
-    private final JList<String> rowHeaderList;
-    private final DataTableController  controller;
+    private DataTableView tableView;
+    private JScrollPane scrollPane;
+    private JLabel signedDecimalLabel;
+    private JLabel unSignedDecimalLabel;
+    private JLabel byteCountLabel;
+    private JLabel fileNameLabel;
+    private JLabel asciiLabel;
+    private JList<String> rowHeaderList;
+    private DataTableController  controller;
 
     public MainView() {
         setTitle("Hex Editor");
+        initUI();
+        setupMenuBar();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
+    }
 
+    private void initUI() {
+        initTableView();
+        initInfoPanel();
+    }
+
+    private void initTableView() {
         // Создаем таблицу для отображения байтов
         tableView = new DataTableView();
         tableView.setListener(this);
         scrollPane = tableView.getScrollPane();
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        controller=tableView.getController();
+        controller = tableView.getController();
 
         // Создаем панель для таблицы
         JPanel tablePanel = new JPanel(new GridBagLayout());
@@ -37,7 +52,9 @@ public class MainView extends JFrame implements hexEditorListener {
         gbc.fill = GridBagConstraints.BOTH;
         tablePanel.add(scrollPane, gbc);
         add(tablePanel, BorderLayout.CENTER);
+    }
 
+    private void initInfoPanel() {
         //Добавляем заголовки к строкам
         rowHeaderList = new JList<>();
         Font font = rowHeaderList.getFont();
@@ -50,37 +67,43 @@ public class MainView extends JFrame implements hexEditorListener {
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Добавляем строку с информацией о количестве байтов
-        JLabel byteCountLabel = new JLabel();
+        byteCountLabel = new JLabel();
         byteCountLabel.setPreferredSize(new Dimension(100, 20));
         bottomPanel.add(byteCountLabel);
 
         // Добавляем строку с информацией об открытом файле
-        JLabel fileNameLabel = new JLabel();
+        fileNameLabel = new JLabel();
         fileNameLabel.setPreferredSize(new Dimension(200, 20));
         bottomPanel.add(fileNameLabel);
 
         // Добавляем строку с информацией о байте в десятичном со знаком
         signedDecimalLabel = new JLabel();
         byteCountLabel.setPreferredSize(new Dimension(100, 20));
-        bottomPanel.add(signedDecimalLabel);
 
         // Добавляем строку с информацией о байте в десятичном без знака
         unSignedDecimalLabel = new JLabel();
         byteCountLabel.setPreferredSize(new Dimension(100, 20));
-        bottomPanel.add(unSignedDecimalLabel);
 
         // Добавляем строку с информацией о байте в ASCII
         asciiLabel = new JLabel();
         byteCountLabel.setPreferredSize(new Dimension(100, 20));
+
+        bottomPanel.add(signedDecimalLabel);
+        bottomPanel.add(unSignedDecimalLabel);
         bottomPanel.add(asciiLabel);
 
+    }
+
+    private void setupMenuBar() {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.add(fileMenu());
+        menuBar.add(optionsMenu());
+        setJMenuBar(menuBar);
+    }
 
-        // Создаем меню "File"
+    private JMenu fileMenu() {
         JMenu fileMenu = new JMenu("File");
-        fileMenu.setMnemonic(KeyEvent.VK_F);
 
-        // Добавляем пункт меню "Open"
         JMenuItem openMenuItem = new JMenuItem(new AbstractAction("Open") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -99,7 +122,6 @@ public class MainView extends JFrame implements hexEditorListener {
         openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_MASK));
         fileMenu.add(openMenuItem);
 
-        // Добавляем пункт меню "Save"
         JMenuItem saveMenuItem = new JMenuItem(new AbstractAction("Save") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -109,7 +131,6 @@ public class MainView extends JFrame implements hexEditorListener {
         saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         fileMenu.add(saveMenuItem);
 
-        // Добавляем пункт меню "Save As"
         JMenuItem saveAsMenuItem = new JMenuItem(new AbstractAction("Save As") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -119,7 +140,6 @@ public class MainView extends JFrame implements hexEditorListener {
         saveAsMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
         fileMenu.add(saveAsMenuItem);
 
-        // Добавляем пункт меню "New"
         JMenuItem newMenuItem = new JMenuItem(new AbstractAction("New") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -147,7 +167,10 @@ public class MainView extends JFrame implements hexEditorListener {
         newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
         fileMenu.add(newMenuItem);
 
-        // Создаем меню "Options"
+        return fileMenu;
+    }
+
+    private JMenu optionsMenu() {
         JMenu optionsMenu = new JMenu("Options");
 
         JMenu chooseBytesMenu = new JMenu("Select number of bytes");
@@ -220,14 +243,7 @@ public class MainView extends JFrame implements hexEditorListener {
         });
         optionsMenu.add(find);
 
-        menuBar.add(fileMenu);
-        menuBar.add(optionsMenu);
-        setJMenuBar(menuBar);
-
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true);
+        return optionsMenu;
     }
     private void setupRowHeaderList() {
         String[] rowHeaders = tableView.getRowHeaders();

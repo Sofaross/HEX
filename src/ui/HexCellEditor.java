@@ -1,8 +1,6 @@
 package ui;
 import controller.DataTableController;
 import model.Cursor.HexCursor;
-import model.HexEditor;
-
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
@@ -17,34 +15,46 @@ class HexCellEditor extends DefaultCellEditor {
     private final HexCursor cursor;
     private DataTableController controller;
 
-    public HexCellEditor(DataTableController controller,JTable table) {
+    public HexCellEditor(DataTableController controller, JTable table) {
         super(new JTextField());
-        this.controller=controller;
+        this.controller = controller;
         this.cursor = controller.getCursor();
-        JTextField textField = (JTextField) getComponent();
+        setupTextField((JTextField) getComponent(), table);
+    }
+
+    private void setupTextField(JTextField textField, JTable table) {
         AbstractDocument doc = (AbstractDocument) textField.getDocument();
         doc.setDocumentFilter(new HexInputDocumentFilter(2));
+
         textField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                if (textField.getText().length() >= 2) {
-                    int currentRow = table.getEditingRow();
-                    int currentColumn = table.getEditingColumn();
-
-                    if (currentRow != -1 && currentColumn != -1) {
-                        if (currentColumn < table.getColumnCount() - 1) {
-                            table.editCellAt(currentRow, currentColumn + 1);
-                            cursor.setCursorPosition(currentRow,currentColumn+1);
-                            table.repaint();
-                        } else if (currentRow < table.getRowCount() - 1) {
-                            table.editCellAt(currentRow + 1, 0);
-                        }
-                    }
-                }
-
+                handleKeyReleased(textField, table);
             }
         });
     }
+
+    private void handleKeyReleased(JTextField textField, JTable table) {
+        if (textField.getText().length() >= 2) {
+            int currentRow = table.getEditingRow();
+            int currentColumn = table.getEditingColumn();
+
+            if (currentRow != -1 && currentColumn != -1) {
+                if (currentColumn < table.getColumnCount() - 1) {
+                    table.editCellAt(currentRow, currentColumn + 1);
+                    moveToCell(currentRow, currentColumn + 1, table);
+                } else if (currentRow < table.getRowCount() - 1) {
+                    table.editCellAt(currentRow + 1, 0);
+                }
+            }
+        }
+    }
+
+    private void moveToCell(int row, int column, JTable table) {
+        cursor.setCursorPosition(row, column);
+        table.repaint();
+    }
+
     @Override
     public boolean stopCellEditing() {
         boolean result = super.stopCellEditing();
@@ -61,12 +71,9 @@ class HexCellEditor extends DefaultCellEditor {
         }
         return result;
     }
+
     public void setController(DataTableController controller) {
         this.controller = controller;
-    }
-
-    public void setHexEditor(HexEditor hexEditor) {
-        controller.setHexEditor(hexEditor);
     }
 
     @Override
@@ -76,6 +83,7 @@ class HexCellEditor extends DefaultCellEditor {
         textField.setText("");
         return textField;
     }
+
     @Override
     public Object getCellEditorValue() {
         JTextField textField = (JTextField) editorComponent;
@@ -97,6 +105,7 @@ class HexInputDocumentFilter extends DocumentFilter {
     public HexInputDocumentFilter(int maxLength) {
         this.maxLength = maxLength;
     }
+
     @Override
     public void insertString(DocumentFilter.FilterBypass fb, int offset, String text, AttributeSet attr) throws BadLocationException {
         StringBuilder sb = new StringBuilder();
@@ -112,6 +121,7 @@ class HexInputDocumentFilter extends DocumentFilter {
             super.insertString(fb, offset, sb.toString(), attr);
         }
     }
+
     @Override
     public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
         if (length > 0) {

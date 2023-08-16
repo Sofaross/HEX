@@ -1,16 +1,15 @@
 package ui;
 
 import controller.DataTableController;
+import controller.ErrorHandler;
 import controller.hexEditorListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -19,6 +18,7 @@ public class DataTableView extends JTable {
     private final DataTableController controller;
     private final JScrollPane scrollPane;
     private final DefaultTableModel model;
+    private final DataManipulationHelper manipulationHelper;
     private final Set<Point> highlightedCells = new HashSet<>();
 
     public DataTableView() {
@@ -26,6 +26,7 @@ public class DataTableView extends JTable {
         scrollPane = new JScrollPane(table);
         controller = new DataTableController(table);
         model = (DefaultTableModel) table.getModel();
+        manipulationHelper = new DataManipulationHelper(controller, table);
         initTable();
     }
 
@@ -55,6 +56,11 @@ public class DataTableView extends JTable {
         table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
         table.setSurrendersFocusOnKeystroke(true);
         addEscapeKeyListener();
+        setupContextMenu();
+        setupCopyKeyBinding();
+    }
+
+    private void setupContextMenu(){
         JPopupMenu contextMenu = new JPopupMenu();
 
         JMenuItem cutItemWithoutOffsetItem = new JMenuItem("Cut without offset");
@@ -72,45 +78,24 @@ public class DataTableView extends JTable {
         contextMenu.add(deleteWithOffsetItem);
 
 
-        deleteWithOffsetItem.addActionListener(e -> handleDeleteAction(true));
-        deleteWithoutOffsetItem.addActionListener(e -> handleDeleteAction(false));
-        pasteWithOffsetItem.addActionListener(e -> pasteCellsFromClipboard(true));
-        pasteWithoutOffsetItem.addActionListener(e -> pasteCellsFromClipboard(false));  
-        cutItemWithOffsetItem.addActionListener(e -> handleCutAction(true));
-        cutItemWithoutOffsetItem.addActionListener(e -> handleCutAction(false));
+        deleteWithOffsetItem.addActionListener(e -> delete(true));
+        deleteWithoutOffsetItem.addActionListener(e -> delete(false));
+        pasteWithOffsetItem.addActionListener(e -> paste(true));
+        pasteWithoutOffsetItem.addActionListener(e -> paste(false));
+        cutItemWithOffsetItem.addActionListener(e ->cut(true));
+        cutItemWithoutOffsetItem.addActionListener(e -> cut(false));
 
         table.setComponentPopupMenu(contextMenu);
+    }
+
+    private void setupCopyKeyBinding() {
         table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), "copy");
         table.getActionMap().put("copy", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                copySelectedCellsToClipboard();
+                manipulationHelper.copySelectedCellsToClipboard(table.getSelectedRows(), table.getSelectedColumns());
             }
         });
-    }
-
-    private void handleCutAction(boolean offset) {
-        int[] selectedRows = table.getSelectedRows();
-        int[] selectedColumns = table.getSelectedColumns();
-
-        if (selectedRows.length > 0 && selectedColumns.length > 0) {
-            copySelectedCellsToClipboard();
-            handleDeleteAction(offset);
-        }
-    }
-
-    private void handleDeleteAction(boolean offset) {
-        int[] selectedRows = table.getSelectedRows();
-        int[] selectedColumns = table.getSelectedColumns();
-
-        if (selectedRows.length > 0 && selectedColumns.length > 0) {
-            int startRow = selectedRows[0];
-            int startColumn = selectedColumns[0];
-            int endRow = selectedRows[selectedRows.length - 1];
-            int endColumn = selectedColumns[selectedColumns.length - 1];
-
-            deleteSelectedBlock(startRow, startColumn, endRow, endColumn, offset);
-        }
     }
 
     private void addEscapeKeyListener() {
@@ -168,7 +153,7 @@ public class DataTableView extends JTable {
 
     public void updateTableModelHex() {
         if (controller.getHexEditor() == null) {
-            throw new IllegalArgumentException("HexEditor is null");
+            ErrorHandler.showError("HexEditor is null");
         }
 
         if (controller.getHexEditor().getByteCount() != 0) {
@@ -181,7 +166,7 @@ public class DataTableView extends JTable {
                 updateTableModel(hexData);
 
             } catch (Exception e) {
-                throw new RuntimeException("Error updating table model", e);
+                ErrorHandler.showError("Error updating table model: " + e.getMessage());
             }
         }
     }
@@ -213,64 +198,24 @@ public class DataTableView extends JTable {
         table.repaint();
     }
 
-    public void clearHighlight() {
+    private void clearHighlight() {
         highlightedCells.clear();
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
         table.repaint();
     }
-    public void deleteSelectedBlock(int startRow, int startColumn, int endRow, int endColumn, boolean offset) {
-        controller.deleteBlock(startRow, startColumn, endRow, endColumn,offset);
+
+    private void delete(boolean offset){
+        manipulationHelper.handleDeleteAction(offset, table.getSelectedRows(), table.getSelectedColumns());
         updateTableModelHex();
     }
-    private void copySelectedCellsToClipboard() {
-        int[] selectedRows = table.getSelectedRows();
-        int[] selectedColumns = table.getSelectedColumns();
 
-        if (selectedRows.length > 0 && selectedColumns.length > 0) {
-            StringBuilder copiedText = new StringBuilder();
-
-            for (int row : selectedRows) {
-                for (int column : selectedColumns) {
-                    Object cellValue = table.getValueAt(row, column);
-                    copiedText.append(cellValue).append('\t');
-                }
-                copiedText.append('\n');
-            }
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(new StringSelection(copiedText.toString()), null);
-        }
+    private void cut(boolean offset){
+        manipulationHelper.cutSelectedCells(offset, table.getSelectedRows(), table.getSelectedColumns());
+        updateTableModelHex();
     }
-    private void pasteCellsFromClipboard(boolean offset) {
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        Transferable transferable = clipboard.getContents(null);
 
-        if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            try {
-                String clipboardData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
-                String[] rowStrings = clipboardData.split("[\\s\\t\\n]+");
-
-                byte[] byteArray = new byte[rowStrings.length];
-                for (int i = 0; i < rowStrings.length; i++) {
-                    try {
-                        int decimalValue = Integer.parseInt(rowStrings[i], 16);
-                        byteArray[i] = (byte) decimalValue;
-                    } catch (NumberFormatException e) {
-                        byteArray[i] = 0;
-                    }
-                }
-                int selectedRow = table.getSelectedRow();
-                int selectedColumn = table.getSelectedColumn();
-
-                if (selectedRow >= 0 && selectedColumn >= 0) {
-                    controller.insertBytesAtPosition(selectedRow, selectedColumn, byteArray, offset);
-                    updateTableModelHex();
-                } else {
-                    System.out.println("No cell selected for paste.");
-                }
-            } catch (NumberFormatException | UnsupportedFlavorException | IOException e) {
-                e.printStackTrace();
-                System.out.println("Error pasting data from clipboard.");
-            }
-        }
+    private void paste(boolean offset){
+        manipulationHelper.pasteCellsFromClipboard(offset,table.getSelectedRow(), table.getSelectedColumn());
+        updateTableModelHex();
     }
 }

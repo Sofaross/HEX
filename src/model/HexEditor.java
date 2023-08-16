@@ -37,6 +37,7 @@ public class HexEditor {
             }
         }
     }
+
     public void deleteRange(int startIndex, int endIndex) {
         if (isDataValid(startIndex) && isDataValid(endIndex)) {
             int rangeLength = endIndex - startIndex + 1;
@@ -48,6 +49,7 @@ public class HexEditor {
             data = newData;
         }
     }
+
     public void replaceBytes(int index, byte[] newBytes) {
         if (isDataValid(index) && newBytes != null) {
             int endIndex = index + newBytes.length - 1;
@@ -104,7 +106,7 @@ public class HexEditor {
         int remainingCells = totalCells - dataSize;
         expandRowData(remainingCells);
 
-        populateHexDataMatrix(hexData, numRows, numColumns);
+        populateHexDataMatrix(hexData, numColumns);
 
         return hexData;
     }
@@ -126,7 +128,7 @@ public class HexEditor {
         return data != null && index >= 0 && index < data.length;
     }
 
-    private void populateHexDataMatrix(String[][] hexData, int numRows, int numColumns) {
+    private void populateHexDataMatrix(String[][] hexData, int numColumns) {
         for (int i = 0; i < data.length; i++) {
             int row = i / numColumns;
             int column = i % numColumns;

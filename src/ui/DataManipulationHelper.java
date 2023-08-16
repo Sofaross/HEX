@@ -39,7 +39,7 @@ public class DataManipulationHelper {
         for (int row : selectedRows) {
             for (int column : selectedColumns) {
                 Object cellValue = getCellValue(row, column);
-                copiedText.append(cellValue).append('\t');
+                copiedText.append(cellValue).append(' ');
             }
             copiedText.append('\n');
         }
@@ -68,7 +68,19 @@ public class DataManipulationHelper {
                 byte[] byteArray = parseClipboardData(clipboardData);
 
                 if (selectedRow >= 0 && selectedColumn >= 0) {
-                    controller.insertBytesAtPosition(selectedRow, selectedColumn, byteArray, offset);
+                    int numRows = (byteArray.length + table.getColumnCount() - 1) / table.getColumnCount(); // Calculate number of rows needed
+
+                    int currentByteIndex = 0;
+                    for (int i = 0; i < numRows; i++) {
+                        int remainingBytes = byteArray.length - currentByteIndex;
+                        int bytesToInsert = Math.min(table.getColumnCount(), remainingBytes);
+
+                        byte[] dataToInsert = new byte[bytesToInsert];
+                        System.arraycopy(byteArray, currentByteIndex, dataToInsert, 0, bytesToInsert);
+
+                        controller.insertBytesAtPosition(selectedRow + i, selectedColumn, dataToInsert, offset);
+                        currentByteIndex += bytesToInsert;
+                    }
                 } else {
                     System.out.println("No cell selected for paste.");
                 }
@@ -77,6 +89,7 @@ public class DataManipulationHelper {
             }
         }
     }
+
 
     private byte[] parseClipboardData(String clipboardData) {
         String[] rowStrings = clipboardData.split("[\\s\\t\\n]+");
