@@ -68,18 +68,12 @@ public class DataManipulationHelper {
                 byte[] byteArray = parseClipboardData(clipboardData);
 
                 if (selectedRow >= 0 && selectedColumn >= 0) {
-                    int numRows = (byteArray.length + table.getColumnCount() - 1) / table.getColumnCount(); // Calculate number of rows needed
+                    int numRows = byteArray.length; // Each byte goes to a new row
+                    int numColumns = table.getColumnCount();
 
-                    int currentByteIndex = 0;
                     for (int i = 0; i < numRows; i++) {
-                        int remainingBytes = byteArray.length - currentByteIndex;
-                        int bytesToInsert = Math.min(table.getColumnCount(), remainingBytes);
-
-                        byte[] dataToInsert = new byte[bytesToInsert];
-                        System.arraycopy(byteArray, currentByteIndex, dataToInsert, 0, bytesToInsert);
-
+                        byte[] dataToInsert = new byte[] { byteArray[i] };
                         controller.insertBytesAtPosition(selectedRow + i, selectedColumn, dataToInsert, offset);
-                        currentByteIndex += bytesToInsert;
                     }
                 } else {
                     System.out.println("No cell selected for paste.");
