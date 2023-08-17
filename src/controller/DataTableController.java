@@ -69,11 +69,7 @@ public class DataTableController {
         this.listener = listener;
     }
 
-    public ListSelectionListener selectionListener = new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-            handleValueChangedEvent();
-        }
-    };
+    public ListSelectionListener selectionListener = e -> handleValueChangedEvent();
 
     private void handleValueChangedEvent() {
         int rowIndex = table.getSelectedRow();
@@ -126,9 +122,9 @@ public class DataTableController {
             for (int col = minColumn; col <= maxColumn; col++) {
                 int index = row * getColumnCount() + col;
                 if (offset) {
-                    hexEditor.deleteRange(index, index);
+                    hexEditor.deleteRange(index);
                 } else {
-                    hexEditor.zeroFillRange(index, index);
+                    hexEditor.zeroFillRange(index);
                 }
             }
         }
