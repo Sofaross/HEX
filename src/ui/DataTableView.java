@@ -2,26 +2,25 @@ package ui;
 
 import controller.DataTableController;
 import controller.ErrorHandler;
+import controller.selectionListener;
 import controller.hexEditorListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-public class DataTableView extends JTable {
+public class DataTableView extends JTable implements selectionListener {
     private final JTable table;
     private final DataTableController controller;
     private final JScrollPane scrollPane;
     private final DefaultTableModel model;
+    private final SelectionManager selectionManager;
     private final DataManipulationHelper manipulationHelper;
     private final Set<Point> highlightedCells = new HashSet<>();
-    private int[] shiftSelectionStart;
-    private int[] shiftSelectionEnd;
 
     public DataTableView() {
         table = new JTable();
@@ -29,6 +28,8 @@ public class DataTableView extends JTable {
         controller = new DataTableController(table);
         model = (DefaultTableModel) table.getModel();
         manipulationHelper = new DataManipulationHelper(controller, table);
+        new ClipboardManager(table, manipulationHelper);
+        selectionManager = new SelectionManager(table);
         initTable();
     }
 
@@ -54,12 +55,15 @@ public class DataTableView extends JTable {
     }
 
     private void attachEventListeners() {
-        attachSelectionListeners();
+        table.getSelectionModel().addListSelectionListener(controller.selectionListener);
+        selectionManager.addSelectionListener(this);
         setupContextMenu();
-        setupCopyKeyBinding();
         addEscapeKeyListener();
     }
-
+    @Override
+    public void onSelectionChanged(List<int[]> cells) {
+        highlightCells(cells);
+    }
     private void setupContextMenu(){
         JPopupMenu contextMenu = new JPopupMenu();
 
@@ -77,7 +81,6 @@ public class DataTableView extends JTable {
         contextMenu.add(deleteWithoutOffsetItem);
         contextMenu.add(deleteWithOffsetItem);
 
-
         deleteWithOffsetItem.addActionListener(e -> delete(true));
         deleteWithoutOffsetItem.addActionListener(e -> delete(false));
         pasteWithOffsetItem.addActionListener(e -> paste(true));
@@ -86,29 +89,6 @@ public class DataTableView extends JTable {
         cutItemWithoutOffsetItem.addActionListener(e -> cut(false));
 
         table.setComponentPopupMenu(contextMenu);
-    }
-
-    private void attachSelectionListeners() {
-        table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                handleShiftSelection();
-            }
-        });
-
-        table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                handleShiftSelection();
-            }
-        });
-    }
-    private void setupCopyKeyBinding() {
-        table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), "copy");
-        table.getActionMap().put("copy", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                manipulationHelper.copySelectedCellsToClipboard(table.getSelectedRows(), table.getSelectedColumns());
-            }
-        });
     }
 
     private void addEscapeKeyListener() {
@@ -120,36 +100,6 @@ public class DataTableView extends JTable {
                 }
             }
         });
-    }
-
-    private void updateShiftHighlight() {
-        List<int[]> cellsToHighlight = new ArrayList<>();
-        for (int row = shiftSelectionStart[0]; row <= shiftSelectionEnd[0]; row++) {
-            for (int column = shiftSelectionStart[1]; column <= shiftSelectionEnd[1]; column++) {
-                cellsToHighlight.add(new int[]{row, column});
-            }
-        }
-
-        highlightCells(cellsToHighlight);
-    }
-
-    private void handleShiftSelection() {
-        int anchorRow = table.getSelectionModel().getAnchorSelectionIndex();
-        int anchorColumn = table.getColumnModel().getSelectionModel().getAnchorSelectionIndex();
-
-        int leadRow = table.getSelectionModel().getLeadSelectionIndex();
-        int leadColumn = table.getColumnModel().getSelectionModel().getLeadSelectionIndex();
-
-        int minRow = Math.min(anchorRow, leadRow);
-        int maxRow = Math.max(anchorRow, leadRow);
-
-        int minColumn = Math.min(anchorColumn, leadColumn);
-        int maxColumn = Math.max(anchorColumn, leadColumn);
-
-        shiftSelectionStart = new int[]{minRow, minColumn};
-        shiftSelectionEnd = new int[]{maxRow, maxColumn};
-
-        updateShiftHighlight();
     }
 
     private void handleEscapeKey() {
@@ -243,8 +193,7 @@ public class DataTableView extends JTable {
 
     private void clearHighlight() {
         highlightedCells.clear();
-        shiftSelectionStart = null;
-        shiftSelectionEnd = null;
+        selectionManager.clearHighlight();
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
         table.repaint();
     }
