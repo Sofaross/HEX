@@ -17,6 +17,7 @@ public class SearchUi extends JPanel {
             controller.parseSearchText(findTextField.getText());
 
         }
+
         setVisible(false);
     }
 }
