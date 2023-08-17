@@ -2,6 +2,6 @@ package controller;
 
 import java.util.List;
 
-public interface SelectionListener {
+public interface selectionListener {
     void onSelectionChanged(List<int[]> cells);
 }
