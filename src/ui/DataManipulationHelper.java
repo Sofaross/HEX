@@ -77,6 +77,7 @@ public class DataManipulationHelper {
             }
         }
     }
+
     private byte[][] parseClipboardDataAsBytesArray(String clipboardData) {
         String[] rowStrings = clipboardData.trim().split("\n");
         byte[][] byteArray = new byte[rowStrings.length][];
