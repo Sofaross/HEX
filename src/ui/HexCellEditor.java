@@ -99,6 +99,7 @@ class HexCellEditor extends DefaultCellEditor {
         return newValue;
     }
 }
+
 class HexInputDocumentFilter extends DocumentFilter {
     private final int maxLength;
 
