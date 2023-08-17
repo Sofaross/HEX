@@ -15,4 +15,5 @@ public class HexCursor {
     public Position getPosition() {
         return position;
     }
+
 }
