@@ -69,7 +69,11 @@ public class DataTableController {
         this.listener = listener;
     }
 
-    public ListSelectionListener selectionListener = e -> handleValueChangedEvent();
+    public ListSelectionListener selectionListener = new ListSelectionListener() {
+        public void valueChanged(ListSelectionEvent e) {
+            handleValueChangedEvent();
+        }
+    };
 
     private void handleValueChangedEvent() {
         int rowIndex = table.getSelectedRow();
@@ -83,7 +87,7 @@ public class DataTableController {
         return row >= 0 && column >= 0;
     }
 
-    private void updateCursorPositionAndCellValue(int row, int column) {
+    public void updateCursorPositionAndCellValue(int row, int column) {
         updateCursorPosition(row, column);
         updateCellValue(row, column);
     }
@@ -94,7 +98,7 @@ public class DataTableController {
         table.repaint();
     }
 
-    private void updateCellValue(int row, int column) {
+    public void updateCellValue(int row, int column) {
         String cellValue = (String) table.getValueAt(row, column);
         if (listener != null) {
             listener.cellValueSelected(cellValue);
