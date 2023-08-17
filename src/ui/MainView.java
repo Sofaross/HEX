@@ -245,11 +245,13 @@ public class MainView extends JFrame implements hexEditorListener {
 
         return optionsMenu;
     }
+
     private void setupRowHeaderList() {
         String[] rowHeaders = tableView.getRowHeaders();
         rowHeaderList.setListData(rowHeaders);
         scrollPane.setRowHeaderView(rowHeaderList);
     }
+
     @Override
     public void cellValueSelected(String cellValue) {
         unSignedDecimalLabel.setText(LabelController.hexToUnsignedDecimalString(cellValue));
