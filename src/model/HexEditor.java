@@ -30,26 +30,22 @@ public class HexEditor {
         }
     }
 
-    public void zeroFillRange(int startIndex, int endIndex) {
-        if (isDataValid(startIndex) && isDataValid(endIndex)) {
-            for (int i = startIndex; i <= endIndex; i++) {
-                data[i] = 0;
-            }
+    public void zeroFillRange(int index) {
+        if (isDataValid(index)) {
+            data[index] = 0;
         }
     }
 
-    public void deleteRange(int startIndex, int endIndex) {
-        if (isDataValid(startIndex) && isDataValid(endIndex)) {
-            int rangeLength = endIndex - startIndex + 1;
-            byte[] newData = new byte[data.length - rangeLength];
+    public void deleteRange(int index) {
+        if (isDataValid(index)) {
+            byte[] newData = new byte[data.length - 1];
 
-            System.arraycopy(data, 0, newData, 0, startIndex);
-            System.arraycopy(data, endIndex + 1, newData, startIndex, data.length - endIndex - 1);
+            System.arraycopy(data, 0, newData, 0, index);
+            System.arraycopy(data, index + 1, newData, index, data.length - index - 1);
 
             data = newData;
         }
     }
-
     public void replaceBytes(int index, byte[] newBytes) {
         if (isDataValid(index) && newBytes != null) {
             int endIndex = index + newBytes.length - 1;
