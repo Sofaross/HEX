@@ -54,12 +54,10 @@ public class DataTableView extends JTable {
     }
 
     private void attachEventListeners() {
-        table.getSelectionModel().addListSelectionListener(controller.selectionListener);
-        table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
-        table.setSurrendersFocusOnKeystroke(true);
-        addEscapeKeyListener();
+        attachSelectionListeners();
         setupContextMenu();
         setupCopyKeyBinding();
+        addEscapeKeyListener();
     }
 
     private void setupContextMenu(){
@@ -90,6 +88,19 @@ public class DataTableView extends JTable {
         table.setComponentPopupMenu(contextMenu);
     }
 
+    private void attachSelectionListeners() {
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                handleShiftSelection();
+            }
+        });
+
+        table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                handleShiftSelection();
+            }
+        });
+    }
     private void setupCopyKeyBinding() {
         table.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.CTRL_DOWN_MASK), "copy");
         table.getActionMap().put("copy", new AbstractAction() {
@@ -109,6 +120,36 @@ public class DataTableView extends JTable {
                 }
             }
         });
+    }
+
+    private void updateShiftHighlight() {
+        List<int[]> cellsToHighlight = new ArrayList<>();
+        for (int row = shiftSelectionStart[0]; row <= shiftSelectionEnd[0]; row++) {
+            for (int column = shiftSelectionStart[1]; column <= shiftSelectionEnd[1]; column++) {
+                cellsToHighlight.add(new int[]{row, column});
+            }
+        }
+
+        highlightCells(cellsToHighlight);
+    }
+
+    private void handleShiftSelection() {
+        int anchorRow = table.getSelectionModel().getAnchorSelectionIndex();
+        int anchorColumn = table.getColumnModel().getSelectionModel().getAnchorSelectionIndex();
+
+        int leadRow = table.getSelectionModel().getLeadSelectionIndex();
+        int leadColumn = table.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+
+        int minRow = Math.min(anchorRow, leadRow);
+        int maxRow = Math.max(anchorRow, leadRow);
+
+        int minColumn = Math.min(anchorColumn, leadColumn);
+        int maxColumn = Math.max(anchorColumn, leadColumn);
+
+        shiftSelectionStart = new int[]{minRow, minColumn};
+        shiftSelectionEnd = new int[]{maxRow, maxColumn};
+
+        updateShiftHighlight();
     }
 
     private void handleEscapeKey() {
@@ -202,9 +243,12 @@ public class DataTableView extends JTable {
 
     private void clearHighlight() {
         highlightedCells.clear();
+        shiftSelectionStart = null;
+        shiftSelectionEnd = null;
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer());
         table.repaint();
     }
+
 
     private void delete(boolean offset){
         manipulationHelper.handleDeleteAction(offset, table.getSelectedRows(), table.getSelectedColumns());
