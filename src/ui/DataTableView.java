@@ -37,6 +37,7 @@ public class DataTableView extends JTable implements selectionListener {
         configureTableAppearance();
         setupCellRenderersAndEditors();
         attachEventListeners();
+
     }
 
     private void configureTableAppearance() {
@@ -56,6 +57,7 @@ public class DataTableView extends JTable implements selectionListener {
 
     private void attachEventListeners() {
         table.getSelectionModel().addListSelectionListener(controller.selectionListener);
+        table.getColumnModel().getSelectionModel().addListSelectionListener(controller.selectionListener);
         selectionManager.addSelectionListener(this);
         setupContextMenu();
         addEscapeKeyListener();
