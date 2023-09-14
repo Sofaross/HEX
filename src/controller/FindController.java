@@ -19,11 +19,17 @@ public class FindController {
     }
 
     public void performSearchWithMask() {
+        if (searchMask == null || searchMask.length == 0) {
+            return;
+        }
         List<int[]> foundCells = findCellsWithMask();
         tableView.highlightCells(foundCells);
     }
 
     public void parseSearchText(String findText) {
+        if (findText == null || findText.trim().isEmpty()) {
+            return;
+        }
         String[] bytePairs = findText.split(BYTE_PAIR_SEPARATOR);
         searchMask = buildSearchMask(bytePairs);
     }
