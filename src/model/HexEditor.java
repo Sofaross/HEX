@@ -83,8 +83,17 @@ public class HexEditor {
     }
 
     public void writeToFile(File file) {
-        try (FileOutputStream outputStream = new FileOutputStream(file)) {
-            outputStream.write(data);
+        try (FileOutputStream outputStream = new FileOutputStream(file);
+             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
+            int bufferSize = 1024*1024;
+            int offset = 0;
+
+            while (offset < data.length) {
+                int bytesToWrite = Math.min(bufferSize, data.length - offset);
+                bufferedOutputStream.write(data, offset, bytesToWrite);
+                offset += bytesToWrite;
+            }
+
             this.file = file;
         } catch (IOException e) {
             ErrorHandler.showError("Ошибка записи файла: " + e.getMessage());
@@ -109,12 +118,20 @@ public class HexEditor {
 
     private void initializeFromFile(String fileName) {
         file = new File(fileName);
-        data = new byte[(int) file.length()];
-        try (FileInputStream fis = new FileInputStream(file)) {
-            int bytesRead = fis.read(data);
-            if (bytesRead == -1) {
-                ErrorHandler.showError("Файл пустой или достигнут конец файла.");
+
+        try (FileInputStream fis = new FileInputStream(file);
+             BufferedInputStream bufferedInputStream = new BufferedInputStream(fis)) {
+            int bufferSize = 1024*1024;
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            while ((bytesRead = bufferedInputStream.read(buffer, 0, bufferSize)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
             }
+
+            data = outputStream.toByteArray();
         } catch (IOException e) {
             ErrorHandler.showError("Ошибка чтения файла: " + e.getMessage());
         }
