@@ -100,35 +100,25 @@ public class HexEditor {
         }
     }
 
-    public String[][] convertDataToHexMatrix(int numRows, int numColumns) {
-        if (data == null) {
-            return null;
-        }
-
-        String[][] hexData = new String[numRows][numColumns];
-        int dataSize = data.length;
-        int totalCells = numRows * numColumns;
-        int remainingCells = totalCells - dataSize;
-        expandRowData(remainingCells);
-
-        populateHexDataMatrix(hexData, numColumns);
-
-        return hexData;
-    }
 
     private void initializeFromFile(String fileName) {
         file = new File(fileName);
 
+        long maxFileSize = 1024 * 1024 * 50;
+
+        int blockSize = 1024 * 1024;
+
         try (FileInputStream fis = new FileInputStream(file);
-             BufferedInputStream bufferedInputStream = new BufferedInputStream(fis)) {
-            int bufferSize = 1024*1024;
-            byte[] buffer = new byte[bufferSize];
+             BufferedInputStream bufferedInputStream = new BufferedInputStream(fis);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[blockSize];
             int bytesRead;
+            long totalBytesRead = 0;
 
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            while ((bytesRead = bufferedInputStream.read(buffer, 0, bufferSize)) != -1) {
+            while (totalBytesRead < maxFileSize && (bytesRead = bufferedInputStream.read(buffer, 0, blockSize)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
             }
 
             data = outputStream.toByteArray();
@@ -140,17 +130,47 @@ public class HexEditor {
     private boolean isDataValid(int index) {
         return data != null && index >= 0 && index < data.length;
     }
+    public byte[] getChunk(int startIndex, int chunkSize) {
+        if (startIndex < 0 || startIndex >= data.length) {
+            ErrorHandler.showError("Недопустимый начальный индекс для порции.");
+            return null;
+        }
 
-    private void populateHexDataMatrix(String[][] hexData, int numColumns) {
+        int endIndex = Math.min(startIndex + chunkSize, data.length);
+        return Arrays.copyOfRange(data, startIndex, endIndex);
+    }
+
+    public String[][] convertDataToHexMatrix(int numRows, int numColumns) {
+        if (data == null) {
+            return null;
+        }
+
+        int dataSize = data.length;
+        int totalCells = numRows * numColumns;
+        int remainingCells = totalCells - dataSize;
+        expandRowData(remainingCells);
+        String[][] hexData = new String[numRows][numColumns];
+        StringBuilder hexStringBuilder = new StringBuilder(data.length*2);
+
         for (int i = 0; i < data.length; i++) {
-            int row = i / numColumns;
-            int column = i % numColumns;
-            if (data[i] != 0) {
-                hexData[row][column] = String.format("%02X", data[i]);
-            } else {
-                hexData[row][column] = "00";
+            int intValue = data[i] & 0xFF;
+            String hexValue = Integer.toHexString(intValue);
+
+            if (hexValue.length() < 2) {
+                hexValue = "0" + hexValue;
+            }
+
+            hexStringBuilder.append(hexValue);
+
+            hexStringBuilder.append(" ");
+
+            if ((i + 1) % numColumns == 0) {
+                hexData[i / numColumns] = hexStringBuilder.toString().split(" ");
+                hexStringBuilder.setLength(0);
             }
         }
+
+        return hexData;
     }
 
     public void expandRowData(int columnCount) {
