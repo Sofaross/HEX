@@ -130,15 +130,6 @@ public class HexEditor {
     private boolean isDataValid(int index) {
         return data != null && index >= 0 && index < data.length;
     }
-    public byte[] getChunk(int startIndex, int chunkSize) {
-        if (startIndex < 0 || startIndex >= data.length) {
-            ErrorHandler.showError("Недопустимый начальный индекс для порции.");
-            return null;
-        }
-
-        int endIndex = Math.min(startIndex + chunkSize, data.length);
-        return Arrays.copyOfRange(data, startIndex, endIndex);
-    }
 
     public String[][] convertDataToHexMatrix(int numRows, int numColumns) {
         if (data == null) {
